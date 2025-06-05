@@ -1,0 +1,628 @@
+=== Diretórios (excluindo bin/ e obj/) ===
+.
+./TCUWatcher.API
+./TCUWatcher.API/Extensions
+./TCUWatcher.API/Authentication
+./TCUWatcher.API/Properties
+./TCUWatcher.API/Controllers
+./TCUWatcher.Application
+./TCUWatcher.Application/Users
+./TCUWatcher.Application/Users/DTOs
+./TCUWatcher.Application/LiveEvents
+./TCUWatcher.Application/LiveEvents/DTOs
+./TCUWatcher.Infrastructure
+./TCUWatcher.Infrastructure/Users
+./TCUWatcher.Domain
+./TCUWatcher.Domain/Repositories
+./TCUWatcher.Domain/Services
+./TCUWatcher.Domain/Entities
+
+=== Arquivos de código e conteúdo ===
+
+----- ./TCUWatcher.API/Extensions/SwaggerExtensions.cs -----
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.OpenApi.Models;
+    using System.Collections.Generic;
+    
+    namespace TCUWatcher.API.Extensions
+    {
+        public static class SwaggerExtensions
+        {
+            /// <summary>
+            /// Configura o Swagger para suportar Bearer token (JWT) nos endpoints protegidos,
+            /// usando o esquema HTTP (tipo bearer). Assim, basta fornecer o token sem digitar "Bearer ".
+            /// </summary>
+            public static IServiceCollection AddSwaggerWithBearer(this IServiceCollection services)
+            {
+                services.AddEndpointsApiExplorer();
+                services.AddSwaggerGen(c =>
+                {
+                    c.SwaggerDoc("v1", new OpenApiInfo
+                    {
+                        Title = "TCUWatcher.API",
+                        Version = "v1"
+                    });
+    
+                    // Agora definimos um esquema de segurança do tipo HTTP Bearer:
+                    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Description = "Informe o token JWT aqui (sem o prefixo 'Bearer ').\n" +
+                                      "O Swagger irá adicionar automaticamente 'Bearer ' antes do valor.",
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.Http,         // <<-- alterado para Http
+                        Scheme = "bearer",                      // <<-- informamos "bearer" (minúsculo)
+                        BearerFormat = "JWT"                    // (opcional: só para documentação)
+                    });
+    
+                    // Ainda precisamos exigir o uso desse esquema nos endpoints que tenham [Authorize]:
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                },
+                                Scheme = "bearer",
+                                Name = "Bearer",
+                                In = ParameterLocation.Header
+                            },
+                            new List<string>()
+                        }
+                    });
+                });
+    
+                return services;
+            }
+        }
+    }
+
+----- ./TCUWatcher.API/appsettings.json -----
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      },
+      "AllowedHosts": "*"
+    }
+
+----- ./TCUWatcher.API/Authentication/MockAuthenticationService.cs -----
+    using System.Threading.Tasks;
+    using TCUWatcher.Application.Users;
+    using TCUWatcher.Application.Users.DTOs;
+    
+    namespace TCUWatcher.API.Authentication
+    {
+        public class MockAuthenticationService : IAuthenticationService
+        {
+            public Task<bool> ValidateCredentialsAsync(string email, string password)
+                => Task.FromResult(true);
+    
+            public Task<string> GenerateTokenAsync(UserDto user)
+                => Task.FromResult("mock-token-abc123");
+        }
+    }
+
+----- ./TCUWatcher.API/Authentication/MockAuthenticationHandler.cs -----
+    using System.Security.Claims;
+    using System.Text.Encodings.Web;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authentication;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+    using TCUWatcher.Application.Users;
+    using TCUWatcher.Application.Users.DTOs;
+    
+    namespace TCUWatcher.API.Authentication
+    {
+        /// <summary>
+        /// Um AuthenticationHandler “mock” que aceita qualquer valor não-vazio em "Authorization: Bearer &lt;token&gt;"
+        /// e considera o usuário retornado por ICurrentUserProvider como autenticado.
+        /// </summary>
+        public class MockAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+        {
+            private readonly ICurrentUserProvider _currentUserProvider;
+    
+            public MockAuthenticationHandler(
+                IOptionsMonitor<AuthenticationSchemeOptions> options,
+                ILoggerFactory logger,
+                UrlEncoder encoder,
+                ISystemClock clock,                   // Voltamos a usar ISystemClock (apesar de obsoleto)
+                ICurrentUserProvider currentUserProvider)
+                : base(options, logger, encoder, clock)
+            {
+                _currentUserProvider = currentUserProvider;
+            }
+    
+            protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+            {
+                // 1) Verifica se existe header Authorization
+                if (!Request.Headers.ContainsKey("Authorization"))
+                    return AuthenticateResult.Fail("Cabeçalho Authorization ausente");
+    
+                // 2) Extrai valor completo "Bearer <token>"
+                var authHeader = Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
+                    return AuthenticateResult.Fail("Cabeçalho Authorization inválido");
+    
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+                if (string.IsNullOrEmpty(token))
+                    return AuthenticateResult.Fail("Token vazio");
+    
+                // 3) Recupera o usuário mock
+                var userDto = await _currentUserProvider.GetCurrentUserAsync();
+                if (userDto is null)
+                    return AuthenticateResult.Fail("Usuário não encontrado no provider");
+    
+                // 4) Monta ClaimsPrincipal a partir do UserDto
+                var claims = new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userDto.Id),
+                    new Claim(ClaimTypes.Name, userDto.Name),
+                    new Claim(ClaimTypes.Email, userDto.Email)
+                };
+    
+                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                foreach (var role in userDto.Roles)
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Role, role));
+                }
+    
+                var principal = new ClaimsPrincipal(identity);
+                var ticket = new AuthenticationTicket(principal, Scheme.Name);
+                return AuthenticateResult.Success(ticket);
+            }
+        }
+    }
+
+----- ./TCUWatcher.API/Authentication/MockAuthenticationExtensions.cs -----
+    using Microsoft.AspNetCore.Authentication;
+    using Microsoft.Extensions.DependencyInjection;
+    
+    namespace TCUWatcher.API.Authentication
+    {
+        public static class MockAuthenticationExtensions
+        {
+            public static IServiceCollection AddMockAuthentication(this IServiceCollection services)
+            {
+                services.AddAuthentication("Bearer")
+                        .AddScheme<AuthenticationSchemeOptions, MockAuthenticationHandler>(
+                            "Bearer", options => { });
+    
+                services.AddAuthorization();
+                return services;
+            }
+        }
+    }
+
+----- ./TCUWatcher.API/appsettings.Development.json -----
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      }
+    }
+
+----- ./TCUWatcher.API/Controllers/AuthController.cs -----
+    using TCUWatcher.Application.Users;
+    using TCUWatcher.Application.Users.DTOs;
+    using Microsoft.AspNetCore.Mvc;
+    
+    namespace TCUWatcher.API.Controllers;
+    
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
+    {
+        private readonly IAuthenticationService _authenticationService;
+        private readonly IUserService _userService;
+    
+        public AuthController(
+            IAuthenticationService authenticationService,
+            IUserService userService)
+        {
+            _authenticationService = authenticationService;
+            _userService = userService;
+        }
+    
+        // DTO de entrada para login
+        public class LoginRequest
+        {
+            public string Email { get; set; } = default!;
+            public string Password { get; set; } = default!;
+        }
+    
+        // DTO de resposta ao cliente
+        public class LoginResponse
+        {
+            public string Token { get; set; } = default!;
+        }
+    
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            // 1) Validar se existe usuário (mockado)
+            var userDto = await _userService.GetByEmailAsync(request.Email);
+            if (userDto is null)
+            {
+                return Unauthorized(new { message = "Usuário não encontrado" });
+            }
+    
+            // 2) Validar credenciais (sempre retorna true no mock)
+            var valid = await _authenticationService.ValidateCredentialsAsync(request.Email, request.Password);
+            if (!valid)
+            {
+                return Unauthorized(new { message = "Credenciais inválidas" });
+            }
+    
+            // 3) Gerar “token” (mockado)
+            var token = await _authenticationService.GenerateTokenAsync(userDto);
+    
+            return Ok(new LoginResponse { Token = token });
+        }
+    }
+
+----- ./TCUWatcher.API/Controllers/TestController.cs -----
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+    using TCUWatcher.Application.Users;
+    
+    namespace TCUWatcher.API.Controllers;
+    
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TestController : ControllerBase
+    {
+        private readonly ICurrentUserProvider _currentUserProvider;
+    
+        public TestController(ICurrentUserProvider currentUserProvider)
+        {
+            _currentUserProvider = currentUserProvider;
+        }
+    
+        [HttpGet("me")]
+        [Authorize]  // ← protege o endpoint com o esquema “Bearer mock” configurado no Program.cs
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var user = await _currentUserProvider.GetCurrentUserAsync();
+            return Ok(user);
+        }
+    }
+
+----- ./TCUWatcher.API/Program.cs -----
+    using TCUWatcher.Application.Users;
+    using TCUWatcher.API.Authentication;      // para MockAuthenticationHandler e AddMockAuthentication
+    using TCUWatcher.Infrastructure.Users;
+    using TCUWatcher.API.Extensions;          // para AddSwaggerWithBearer
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    
+    var builder = WebApplication.CreateBuilder(args);
+    
+    // 1) Serviços fundamentais
+    builder.Services.AddControllers();
+    
+    // 2) Registrar mocks de usuário
+    builder.Services.AddSingleton<ICurrentUserProvider, MockUserProvider>();
+    builder.Services.AddScoped<IUserService, MockUserService>();
+    builder.Services.AddScoped<IAuthenticationService, MockAuthenticationService>();
+    
+    // 3) Registrar esquema “Bearer mock”
+    builder.Services.AddMockAuthentication();
+    
+    // 4) Configurar Swagger/OpenAPI com Bearer
+    builder.Services.AddSwaggerWithBearer();
+    
+    var app = builder.Build();
+    
+    // 5) Middleware de Swagger (apenas em Dev)
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+    
+    app.UseHttpsRedirection();
+    
+    // 6) Ativar autenticação/ autorização
+    app.UseAuthentication();
+    app.UseAuthorization();
+    
+    // 7) Mapear controllers
+    app.MapControllers();
+    
+    app.Run();
+
+----- ./TCUWatcher.Application/Users/IAuthenticationService.cs -----
+    using TCUWatcher.Application.Users.DTOs;
+    
+    namespace TCUWatcher.Application.Users;
+    
+    public interface IAuthenticationService
+    {
+        Task<string> GenerateTokenAsync(UserDto user);
+        Task<bool> ValidateCredentialsAsync(string email, string password);
+    }
+
+----- ./TCUWatcher.Application/Users/DTOs/CreateUserDto.cs -----
+    namespace TCUWatcher.Application.Users.DTOs;
+    
+    public class CreateUserDto
+    {
+        public string Name { get; set; } = default!;
+        public string Email { get; set; } = default!;
+        public string Password { get; set; } = default!;
+    }
+
+----- ./TCUWatcher.Application/Users/DTOs/UserDto.cs -----
+    namespace TCUWatcher.Application.Users.DTOs;
+    
+    public class UserDto
+    {
+        public string Id { get; set; } = default!;
+        public string Name { get; set; } = default!;
+        public string Email { get; set; } = default!;
+        public List<string> Roles { get; set; } = new();
+    }
+
+----- ./TCUWatcher.Application/Users/ICurrentUserProvider.cs -----
+    namespace TCUWatcher.Application.Users;
+    
+    using TCUWatcher.Application.Users.DTOs;
+    
+    public interface ICurrentUserProvider
+    {
+        Task<UserDto?> GetCurrentUserAsync();
+    }
+
+----- ./TCUWatcher.Application/Users/IUserService.cs -----
+    using TCUWatcher.Application.Users.DTOs;
+    
+    namespace TCUWatcher.Application.Users;
+    
+    public interface IUserService
+    {
+        Task<UserDto?> GetByEmailAsync(string email);
+        Task CreateAsync(CreateUserDto user);
+    }
+
+----- ./TCUWatcher.Application/LiveEvents/LiveEventService.cs -----
+
+----- ./TCUWatcher.Application/LiveEvents/DTOs/LiveEventDto.cs -----
+    namespace TCUWatcher.Application.LiveEvents.DTOs;
+    
+    public class LiveEventDto
+    {
+        public string Id { get; set; } = default!;
+        public string Title { get; set; } = default!;
+        public string SourceType { get; set; } = default!; // ex: \"YouTube\" ou \"ManualUpload\"
+        public string? SourceId { get; set; }
+        public bool IsLive { get; set; }
+        public DateTime? StartedAt { get; set; }
+        public DateTime? EndedAt { get; set; }
+    }
+
+----- ./TCUWatcher.Application/LiveEvents/DTOs/CreateLiveEventDto.cs -----
+    namespace TCUWatcher.Application.LiveEvents.DTOs;
+    
+    public class CreateLiveEventDto
+    {
+        public string Title { get; set; } = default!;
+        public string SourceType { get; set; } = default!; // ex: \"YouTube\" ou \"ManualUpload\"
+        public string? SourceId { get; set; }
+        public DateTime? StartedAt { get; set; }
+        public bool IsLive { get; set; }
+    }
+
+----- ./TCUWatcher.Application/LiveEvents/ILiveEventService.cs -----
+    using TCUWatcher.Application.LiveEvents.DTOs;
+    
+    namespace TCUWatcher.Application.LiveEvents;
+    
+    public interface ILiveEventService
+    {
+        Task<IEnumerable<LiveEventDto>> GetAllAsync();
+        Task<LiveEventDto?> GetByIdAsync(string id);
+        Task<LiveEventDto> CreateAsync(CreateLiveEventDto input);
+    }
+
+----- ./TCUWatcher.Infrastructure/Users/MockUserProvider.cs -----
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using TCUWatcher.Application.Users;
+    using TCUWatcher.Application.Users.DTOs;
+    
+    namespace TCUWatcher.Infrastructure.Users
+    {
+        public class MockUserProvider : ICurrentUserProvider
+        {
+            public Task<UserDto?> GetCurrentUserAsync()
+            {
+                var mockUser = new UserDto
+                {
+                    Id = "mock-user-001",
+                    Name = "Auditor TCU",
+                    Email = "auditor@tcu.gov.br",
+                    Roles = new List<string> { "Admin" }
+                };
+    
+                return Task.FromResult<UserDto?>(mockUser);
+            }
+        }
+    }
+
+----- ./TCUWatcher.Infrastructure/Users/MockUserService.cs -----
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using TCUWatcher.Application.Users;
+    using TCUWatcher.Application.Users.DTOs;
+    
+    namespace TCUWatcher.Infrastructure.Users
+    {
+        public class MockUserService : IUserService
+        {
+            public Task<UserDto?> GetByEmailAsync(string email)
+                => Task.FromResult<UserDto?>(new UserDto {
+                    Id = "mock-123",
+                    Name = "Usuário Mock",
+                    Email = email,
+                    Roles = new List<string> { "User" }
+                });
+    
+            public Task CreateAsync(CreateUserDto user)
+                => Task.CompletedTask;
+        }
+    }
+
+----- ./TCUWatcher.Domain/Repositories/ITranscriptSegmentRepository.cs -----
+    using TCUWatcher.Domain.Entities;
+    
+    namespace TCUWatcher.Domain.Repositories;
+    
+    public interface ITranscriptSegmentRepository
+    {
+        Task<IEnumerable<TranscriptSegment>> GetByProcessIdAsync(string processId);
+        Task AddAsync(TranscriptSegment segment);
+        Task UpdateAsync(TranscriptSegment segment);
+    }
+
+----- ./TCUWatcher.Domain/Repositories/IUserRepository.cs -----
+    using TCUWatcher.Domain.Entities;
+    
+    namespace TCUWatcher.Domain.Repositories;
+    
+    public interface IUserRepository
+    {
+        Task<User?> GetByIdAsync(string id);
+        Task<User?> GetByEmailAsync(string email);
+        Task AddAsync(User user);
+        Task UpdateAsync(User user);
+    }
+
+----- ./TCUWatcher.Domain/Repositories/ILiveEventRepository.cs -----
+    using TCUWatcher.Domain.Entities;
+    
+    namespace TCUWatcher.Domain.Repositories;
+    
+    public interface ILiveEventRepository
+    {
+        Task<LiveEvent?> GetByIdAsync(string id);
+        Task<LiveEvent?> GetBySourceIdAsync(string sourceId);
+        Task<IEnumerable<LiveEvent>> GetAllAsync();
+        Task<IEnumerable<LiveEvent>> GetActiveAsync();
+        Task AddAsync(LiveEvent liveEvent);
+        Task UpdateAsync(LiveEvent liveEvent);
+    }
+
+----- ./TCUWatcher.Domain/Repositories/IJudgedProcessRepository.cs -----
+    using TCUWatcher.Domain.Entities;
+    
+    namespace TCUWatcher.Domain.Repositories;
+    
+    public interface IJudgedProcessRepository
+    {
+        Task<IEnumerable<JudgedProcess>> GetByLiveEventIdAsync(string liveEventId);
+        Task AddAsync(JudgedProcess process);
+        Task UpdateAsync(JudgedProcess process);
+    }
+
+----- ./TCUWatcher.Domain/Services/IStorageService.cs -----
+    namespace TCUWatcher.Domain.Services;
+    
+    public interface IStorageService
+    {
+        Task<string> SaveAsync(string key, Stream data);
+        Task<Stream> ReadAsync(string key);
+        Task DeleteAsync(string key);
+    }
+
+----- ./TCUWatcher.Domain/Services/IVideoDiscoveryService.cs -----
+    namespace TCUWatcher.Domain.Services;
+    
+    public class DiscoveredVideo
+    {
+        public string Title { get; set; } = default!;
+        public string VideoId { get; set; } = default!;
+        public string Url { get; set; } = default!;
+        public DateTime StartedAt { get; set; }
+    }
+    
+    public interface IVideoDiscoveryService
+    {
+        Task<IEnumerable<DiscoveredVideo>> GetLiveEventsAsync();
+    }
+
+----- ./TCUWatcher.Domain/Entities/TranscriptSegment.cs -----
+    namespace TCUWatcher.Domain.Entities;
+    
+    public class TranscriptSegment
+    {
+        public string Id { get; set; } = default!;
+        public string LiveEventId { get; set; } = default!;
+        public string? JudgedProcessId { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
+        public string Text { get; set; } = default!;
+        public string? Speaker { get; set; }
+    }
+
+----- ./TCUWatcher.Domain/Entities/EventSourceType.cs -----
+    namespace TCUWatcher.Domain.Entities;
+    
+    public enum EventSourceType
+    {
+        YouTube,
+        ManualUpload,
+        Other
+    }
+
+----- ./TCUWatcher.Domain/Entities/LiveEvent.cs -----
+    namespace TCUWatcher.Domain.Entities;
+    
+    public class LiveEvent
+    {
+        public string Id { get; set; } = default!;
+        public string Title { get; set; } = default!;
+        public EventSourceType SourceType { get; set; }
+        public string? SourceId { get; set; }
+        public string? Url { get; set; }
+        public DateTime? StartedAt { get; set; }
+        public DateTime? EndedAt { get; set; }
+        public bool IsLive { get; set; }
+        public string? UploadedByUserId { get; set; }
+        public List<TranscriptSegment> Transcripts { get; set; } = new();
+        public List<JudgedProcess> Processes { get; set; } = new();
+        public bool IsManualUpload => SourceType == EventSourceType.ManualUpload;
+    }
+
+----- ./TCUWatcher.Domain/Entities/User.cs -----
+    namespace TCUWatcher.Domain.Entities;
+    
+    public class User
+    {
+        public string Id { get; set; } = default!;
+        public string Name { get; set; } = default!;
+        public string Email { get; set; } = default!;
+        public List<string> Roles { get; set; } = new();
+    }
+
+----- ./TCUWatcher.Domain/Entities/JudgedProcess.cs -----
+    namespace TCUWatcher.Domain.Entities;
+    
+    public class JudgedProcess
+    {
+        public string Id { get; set; } = default!;
+        public string LiveEventId { get; set; } = default!;
+        public string CaseNumber { get; set; } = default!;
+        public string? Title { get; set; }
+        public string? Status { get; set; }
+        public List<TranscriptSegment> TranscriptSegments { get; set; } = new();
+    }

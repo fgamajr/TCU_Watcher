@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "Bp9Ol9flUCfmVzMWdWaVUx4TdYsEVCGRbqPXzSXceIg=",
+  "Source": "TCUWatcher.API",
+  "BasePath": "_content/TCUWatcher.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

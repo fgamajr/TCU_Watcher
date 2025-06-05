@@ -1,0 +1,15 @@
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/bin/Debug/net8.0/TCUWatcher.Application.deps.json
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/bin/Debug/net8.0/TCUWatcher.Application.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/bin/Debug/net8.0/TCUWatcher.Application.pdb
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/bin/Debug/net8.0/TCUWatcher.Domain.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/bin/Debug/net8.0/TCUWatcher.Domain.pdb
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.csproj.AssemblyReference.cache
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.GeneratedMSBuildEditorConfig.editorconfig
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.AssemblyInfoInputs.cache
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.AssemblyInfo.cs
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.csproj.CoreCompileInputs.cache
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatch.1DC44EBD.Up2Date
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/refint/TCUWatcher.Application.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.pdb
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/ref/TCUWatcher.Application.dll
