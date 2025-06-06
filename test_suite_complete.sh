@@ -29,11 +29,14 @@ SWAGGER_URL="$BASE_URL/swagger/v1/swagger.json"
 VALID_TOKEN=""
 INVALID_TOKEN="token-invalido-que-nao-deve-funcionar"
 
+# Arquivos de controle e log
 LOGFILE="test_suite_$(date +%Y%m%d_%H%M%S).log"
 IDS_FILE="load_test_ids.txt"
+TO_DELETE_FILE="to_delete_full.txt"
 ENDPOINTS_FILE="endpoints.json"
 ENDPOINTS_LIST="endpoints_list.txt"
 : > "$IDS_FILE"
+: > "$TO_DELETE_FILE"
 
 # Funções de Logging
 log() { echo -e "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOGFILE"; }
@@ -84,8 +87,10 @@ AUTH_RESULTS+=("$(printf '%s' '-------------------------------------------------
 while read -r line; do
   method=$(echo "$line" | awk '{print $1}') && path=$(echo "$line" | awk '{print $2}')
   
-  # LÓGICA CORRIGIDA: Ignora completamente o endpoint de login, pois ele não segue as regras de autorização padrão
-  if [[ "$path" == "/api/auth/login" ]]; then
+  # =====================================================================================
+  # CORREÇÃO FINAL: Compara o caminho em minúsculas para ignorar o login corretamente
+  # =====================================================================================
+  if [[ "${path,,}" == "/api/auth/login" ]]; then
     result_row=$(printf '%-8s %-35s %-15s %-15s %-15s' "$method" "$path" "IGNORADO" "IGNORADO" "IGNORADO")
     AUTH_RESULTS+=("$result_row")
     continue
@@ -119,7 +124,6 @@ fi
 # FASE 3: TESTE DE FLUXO FUNCIONAL (E2E SMOKE TEST)
 ################################################################################
 header "FASE 3: TESTE DE FLUXO FUNCIONAL (E2E SMOKE TEST)"
-
 SMOKE_TEST_STATUS="FAIL"
 TMP_VIDEO_SMOKE="dummy_smoke.bin"
 head -c 1024 /dev/zero > "$TMP_VIDEO_SMOKE"
@@ -185,7 +189,7 @@ header "FASE 5: TESTE DE CARGA E ESTRESSE"
 
 log "Limpando dados remanescentes antes do teste de carga..."
 curl_output=$(curl -s -X GET "$SE_URL" -H "Authorization: Bearer $VALID_TOKEN")
-( echo "$curl_output" | jq -r '.[].id' | grep -v '^$' ) > "$TO_DELETE_FILE" 2>/dev/null || true
+( echo "$curl_output" | jq -r '.[].id' 2>/dev/null | grep -v '^$' ) > "$TO_DELETE_FILE" 2>/dev/null || true
 existing_count=$(wc -l < "$TO_DELETE_FILE" | tr -d '[:space:]')
 if (( existing_count > 0 )); then
     log "  Limpando $existing_count itens..."

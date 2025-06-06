@@ -1,0 +1,114 @@
+###############################################################################
+# .NET / C# (gerado a partir de template oficial + ajustes para TCUWatcher)
+###############################################################################
+
+## Build results
+bin/
+obj/
+publish/
+out/
+
+# Cache do SDK
+.nuget/
+packages/
+*.nupkg
+
+# Arquivos de log gerados pelo dotnet
+*.log
+*.tlog
+*.ide
+*.ilk
+*.pdb
+*.cache
+*.dbmdl
+*.dbmdl-journal
+
+# Arquivos de dump
+*.dmp
+Crash*.txt
+Database*.mdf
+Database*.ldf
+
+###############################################################################
+# Ferramentas e IDEs
+###############################################################################
+
+# Visual Studio / VS for Mac
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+*.dbmdl
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.history/
+.vscode/settings.json
+.vscode/*.code-workspace
+
+###############################################################################
+# Configuração e secrets (não versionar chaves locais)
+###############################################################################
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+###############################################################################
+# Sistema Operacional / Editor
+###############################################################################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+# Linux
+*~
+
+###############################################################################
+# Arquivos de teste / scripts de carga
+###############################################################################
+# Saídas de scripts bash
+*.out
+*.report
+*.md.html
+*.html
+*.md
+ids*.txt
+to_delete*.txt
+endpoints*.json
+logs/
+*.log
+
+# Buffers mocks (snapshots/audio)
+snapshots/
+audio/
+*.bin
+
+###############################################################################
+# Ferramentas de contêiner
+###############################################################################
+docker-compose.override.yml
+.env
+.env.*
+
+###############################################################################
+# Outros
+###############################################################################
+# Locks de pacote
+packages.lock.json
+project.lock.json
+
+# Arquivos de backup de editores
+*.bak
+*.tmp
+*.swp
+*.swo
