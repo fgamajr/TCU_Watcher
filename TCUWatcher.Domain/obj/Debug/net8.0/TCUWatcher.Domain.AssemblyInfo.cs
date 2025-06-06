@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TCUWatcher.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9ae3e649d84cf4f666388e702f5d438aef40d865")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4d7037b1528fb73733ed7b042962e163600851b3")]
 [assembly: System.Reflection.AssemblyProductAttribute("TCUWatcher.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TCUWatcher.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

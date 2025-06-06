@@ -9,11 +9,10 @@ using TCUWatcher.Domain.Repositories;
 namespace TCUWatcher.Infrastructure.SessionEvents
 {
     /// <summary>
-    /// Armazena SessionEvent em memória, usando um ConcurrentDictionary.
+    /// Armazena SessionEvent em memória via ConcurrentDictionary.
     /// </summary>
     public class MockSessionEventRepository : ISessionEventRepository
     {
-        // chave = SessionEvent.Id, valor = SessionEvent
         private static readonly ConcurrentDictionary<string, SessionEvent> _storage 
             = new ConcurrentDictionary<string, SessionEvent>();
 

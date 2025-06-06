@@ -5,14 +5,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TCUWatcher.Application.Users;
-using TCUWatcher.Application.Users.DTOs;
-// using System; // You don't need this if sticking with ISystemClock
+using Microsoft.AspNetCore.Hosting.Server; // ISystemClock está aqui ou em Microsoft.AspNetCore.Authentication
 
 namespace TCUWatcher.API.Authentication
 {
     /// <summary>
-    /// Um AuthenticationHandler “mock” que aceita qualquer valor não-vazio em "Authorization: Bearer &lt;token&gt;"
-    /// e considera o usuário retornado por ICurrentUserProvider como autenticado.
+    /// Handler mock que valida um token específico e rejeita os outros.
     /// </summary>
     public class MockAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
@@ -22,21 +20,18 @@ namespace TCUWatcher.API.Authentication
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock, // Keep ISystemClock here
+            ISystemClock clock,
             ICurrentUserProvider currentUserProvider)
-            : base(options, logger, encoder, clock) // Pass clock here
+            : base(options, logger, encoder, clock)
         {
             _currentUserProvider = currentUserProvider;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            // ... (rest of your code remains the same)
-            // 1) Verifica se existe header Authorization
             if (!Request.Headers.ContainsKey("Authorization"))
                 return AuthenticateResult.Fail("Cabeçalho Authorization ausente");
 
-            // 2) Extrai valor completo "Bearer <token>"
             var authHeader = Request.Headers["Authorization"].ToString();
             if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
                 return AuthenticateResult.Fail("Cabeçalho Authorization inválido");
@@ -45,12 +40,20 @@ namespace TCUWatcher.API.Authentication
             if (string.IsNullOrEmpty(token))
                 return AuthenticateResult.Fail("Token vazio");
 
-            // 3) Recupera o usuário mock
+            // ===================================================================
+            // >> CORREÇÃO DE SEGURANÇA CRÍTICA <<
+            // Rejeita qualquer token que não seja o token mock padrão.
+            // ===================================================================
+            if (token != "mock-token-abc123")
+            {
+                return AuthenticateResult.Fail("Token inválido.");
+            }
+            // ===================================================================
+
             var userDto = await _currentUserProvider.GetCurrentUserAsync();
             if (userDto is null)
                 return AuthenticateResult.Fail("Usuário não encontrado no provider");
 
-            // 4) Monta ClaimsPrincipal a partir do UserDto
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, userDto.Id),

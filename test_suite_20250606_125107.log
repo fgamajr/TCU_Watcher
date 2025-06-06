@@ -1,0 +1,32 @@
+[2025-06-06 12:51:07] 
+======================================================
+# INICIANDO SUÍTE DE TESTES COMPLETA
+======================================================
+[2025-06-06 12:51:07] Parâmetros de Carga: 1000 itens, 10 processos paralelos.
+[2025-06-06 12:51:07] Resultados detalhados serão salvos em: test_suite_20250606_125107.log
+[2025-06-06 12:51:07] 
+======================================================
+# FASE 1: PREPARAÇÃO E VERIFICAÇÃO DE SAÚDE
+======================================================
+[2025-06-06 12:51:07] Verificando se a API está online em http://localhost:5092...
+[2025-06-06 12:51:07] Health Check OK (Status 200).
+[2025-06-06 12:51:07] Realizando login para obter token válido...
+[2025-06-06 12:51:07] Token válido obtido com sucesso.
+[2025-06-06 12:51:07] 
+======================================================
+# FASE 2: AUDITORIA DE SEGURANÇA (AUTORIZAÇÃO TRIPLA)
+======================================================
+[2025-06-06 12:51:07] Descobrindo endpoints via Swagger...
+[2025-06-06 12:51:07] 8 endpoints encontrados. Testando...
+[2025-06-06 12:51:07] Auditoria de Segurança concluída. Status: FAIL
+[2025-06-06 12:51:07] FALHA CRÍTICA na auditoria de segurança. Abortando. Revise a tabela de resultados.
+[2025-06-06 12:51:07]   MÉTODO  ENDPOINT                            COM TOKEN       SEM TOKEN       TOKEN INVÁLIDO
+[2025-06-06 12:51:07]   ---------------------------------------------------------------------------------------------
+[2025-06-06 12:51:07]   POST     /api/Auth/login                     OK(415)         FALHA(415)      FALHA(415)     
+[2025-06-06 12:51:07]   GET      /api/SessionEvents                  OK(200)         OK(401)         OK(401)        
+[2025-06-06 12:51:07]   POST     /api/SessionEvents                  OK(415)         OK(401)         OK(401)        
+[2025-06-06 12:51:07]   DELETE   /api/SessionEvents/{id}             OK(204)         OK(401)         OK(401)        
+[2025-06-06 12:51:07]   GET      /api/SessionEvents/{id}             OK(404)         OK(401)         OK(401)        
+[2025-06-06 12:51:07]   PUT      /api/SessionEvents/{id}             OK(415)         OK(401)         OK(401)        
+[2025-06-06 12:51:07]   POST     /api/SessionEvents/upload           OK(400)         OK(401)         OK(401)        
+[2025-06-06 12:51:07]   GET      /api/Test/me                        OK(200)         OK(401)         OK(401)        

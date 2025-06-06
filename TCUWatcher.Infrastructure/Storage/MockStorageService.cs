@@ -2,41 +2,42 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
-using TCUWatcher.Domain.Storage;
+using TCUWatcher.Domain.Services; // <-- CORREÇÃO AQUI
 
 namespace TCUWatcher.Infrastructure.Storage
 {
+    /// <summary>
+    /// Implementação em memória de IStorageService para desenvolvimento.
+    /// </summary>
     public class MockStorageService : IStorageService
     {
-        private readonly ConcurrentDictionary<string, MemoryStream> _storage = new();
+        private static readonly ConcurrentDictionary<string, byte[]> _store
+            = new ConcurrentDictionary<string, byte[]>();
 
-        public Task SaveAsync(string path, Stream content)
+        public Task<string> SaveAsync(string key, Stream data)
         {
-            var memoryStream = new MemoryStream();
-            content.CopyTo(memoryStream);
-            _storage[path] = memoryStream;
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentNullException(nameof(key));
 
-            Console.WriteLine($"[MockStorage] SALVO: {path} ({memoryStream.Length} bytes)");
-            return Task.CompletedTask;
+            using var ms = new MemoryStream();
+            data.CopyTo(ms);
+            _store[key] = ms.ToArray();
+            return Task.FromResult(key);
         }
 
-        public Task<Stream> ReadAsync(string path)
+        public Task<Stream> ReadAsync(string key)
         {
-            if (_storage.TryGetValue(path, out var stream))
-            {
-                stream.Position = 0;
-                Console.WriteLine($"[MockStorage] LIDO: {path} ({stream.Length} bytes)");
-                return Task.FromResult<Stream>(new MemoryStream(stream.ToArray()));
-            }
+            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentNullException(nameof(key));
+            if (!_store.TryGetValue(key, out var bytes))
+                throw new FileNotFoundException($"Chave '{key}' não encontrada no MockStorageService.");
 
-            Console.WriteLine($"[MockStorage] ERRO: Caminho não encontrado -> {path}");
-            throw new FileNotFoundException("Arquivo não encontrado no mock storage", path);
+            return Task.FromResult<Stream>(new MemoryStream(bytes));
         }
 
-        public Task DeleteAsync(string path)
+        public Task DeleteAsync(string key)
         {
-            _storage.TryRemove(path, out _);
-            Console.WriteLine($"[MockStorage] REMOVIDO: {path}");
+            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentNullException(nameof(key));
+            _store.TryRemove(key, out _);
             return Task.CompletedTask;
         }
     }
