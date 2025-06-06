@@ -37,3 +37,4 @@
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.API/obj/Debug/net8.0/TCUWatcher.API.pdb
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.API/obj/Debug/net8.0/TCUWatcher.API.genruntimeconfig.cache
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.API/obj/Debug/net8.0/ref/TCUWatcher.API.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.API/obj/Debug/net8.0/TCUWatcher.API.sourcelink.json

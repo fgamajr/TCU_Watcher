@@ -15,3 +15,4 @@
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/obj/Debug/net8.0/refint/TCUWatcher.Infrastructure.dll
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/obj/Debug/net8.0/TCUWatcher.Infrastructure.pdb
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/obj/Debug/net8.0/ref/TCUWatcher.Infrastructure.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/obj/Debug/net8.0/TCUWatcher.Infrastructure.sourcelink.json

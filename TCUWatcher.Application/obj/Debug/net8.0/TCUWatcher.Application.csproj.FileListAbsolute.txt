@@ -13,3 +13,4 @@
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/refint/TCUWatcher.Application.dll
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.pdb
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/ref/TCUWatcher.Application.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Application/obj/Debug/net8.0/TCUWatcher.Application.sourcelink.json

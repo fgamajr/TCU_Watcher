@@ -5,13 +5,19 @@ using TCUWatcher.API.Extensions;          // para AddSwaggerWithBearer
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TCUWatcher.Application.SessionEvents;
+using TCUWatcher.Domain.Repositories;
+using TCUWatcher.Infrastructure.SessionEvents;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1) Serviços fundamentais
 builder.Services.AddControllers();
 
-// 2) Registrar mocks de usuário
+
+// 2) Registrar mocks
+builder.Services.AddSingleton<ISessionEventRepository, MockSessionEventRepository>();
+builder.Services.AddScoped<ISessionEventService, SessionEventService>();
 builder.Services.AddSingleton<ICurrentUserProvider, MockUserProvider>();
 builder.Services.AddScoped<IUserService, MockUserService>();
 builder.Services.AddScoped<IAuthenticationService, MockAuthenticationService>();

@@ -9,3 +9,4 @@
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Domain/obj/Debug/net8.0/refint/TCUWatcher.Domain.dll
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Domain/obj/Debug/net8.0/TCUWatcher.Domain.pdb
 /home/fgamajr/dev/TCUWatcher/TCUWatcher.Domain/obj/Debug/net8.0/ref/TCUWatcher.Domain.dll
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.Domain/obj/Debug/net8.0/TCUWatcher.Domain.sourcelink.json
