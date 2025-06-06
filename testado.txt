@@ -1,0 +1,84 @@
+
+===============================
+ INICIANDO TESTE COMPLETO DE FLUXO (5 uploads, 10 concorrentes)
+===============================
+
+
+===============================
+ 0) Login para obter token
+===============================
+
+[11:10:54] Token obtido com sucesso.
+
+===============================
+ 1) Simulando 5 uploads com processamento completo
+===============================
+
+[11:10:54] 
+▶ Upload 1 de 5
+[11:10:54] Upload criado com ID: b085dd5f-839a-4a34-9fc4-c6f653b6e7f3
+[11:10:54] Simulando workers (SnapshotStorageWorker / AudioStorageWorker)...
+[11:10:54] Verificando sessão b085dd5f-839a-4a34-9fc4-c6f653b6e7f3 no repositório...
+[11:10:54] Sessão b085dd5f-839a-4a34-9fc4-c6f653b6e7f3 confirmada no repository.
+[11:10:54] Atualizando sessão b085dd5f-839a-4a34-9fc4-c6f653b6e7f3...
+[11:10:54] Atualização OK.
+[11:10:54] Removendo sessão b085dd5f-839a-4a34-9fc4-c6f653b6e7f3...
+[11:10:54] Sessão removida.
+[11:10:54] 
+▶ Upload 2 de 5
+[11:10:55] Upload criado com ID: dd94b71d-5196-4478-a6b4-3d3b1da7345b
+[11:10:55] Simulando workers (SnapshotStorageWorker / AudioStorageWorker)...
+[11:10:55] Verificando sessão dd94b71d-5196-4478-a6b4-3d3b1da7345b no repositório...
+[11:10:55] Sessão dd94b71d-5196-4478-a6b4-3d3b1da7345b confirmada no repository.
+[11:10:55] Atualizando sessão dd94b71d-5196-4478-a6b4-3d3b1da7345b...
+[11:10:55] Atualização OK.
+[11:10:55] Removendo sessão dd94b71d-5196-4478-a6b4-3d3b1da7345b...
+[11:10:55] Sessão removida.
+[11:10:55] 
+▶ Upload 3 de 5
+[11:10:55] Upload criado com ID: 34888be1-fbb2-4d16-8513-3a152374cd52
+[11:10:55] Simulando workers (SnapshotStorageWorker / AudioStorageWorker)...
+[11:10:56] Verificando sessão 34888be1-fbb2-4d16-8513-3a152374cd52 no repositório...
+[11:10:56] Sessão 34888be1-fbb2-4d16-8513-3a152374cd52 confirmada no repository.
+[11:10:56] Atualizando sessão 34888be1-fbb2-4d16-8513-3a152374cd52...
+[11:10:56] Atualização OK.
+[11:10:56] Removendo sessão 34888be1-fbb2-4d16-8513-3a152374cd52...
+[11:10:56] Sessão removida.
+[11:10:56] 
+▶ Upload 4 de 5
+[11:10:56] Upload criado com ID: 357b2ddc-e78e-443c-b109-ef57a9e440ad
+[11:10:56] Simulando workers (SnapshotStorageWorker / AudioStorageWorker)...
+[11:10:56] Verificando sessão 357b2ddc-e78e-443c-b109-ef57a9e440ad no repositório...
+[11:10:56] Sessão 357b2ddc-e78e-443c-b109-ef57a9e440ad confirmada no repository.
+[11:10:56] Atualizando sessão 357b2ddc-e78e-443c-b109-ef57a9e440ad...
+[11:10:56] Atualização OK.
+[11:10:56] Removendo sessão 357b2ddc-e78e-443c-b109-ef57a9e440ad...
+[11:10:56] Sessão removida.
+[11:10:56] 
+▶ Upload 5 de 5
+[11:10:56] Upload criado com ID: 19e22bc0-bc9b-4c31-8d1a-90bea41b9fe6
+[11:10:56] Simulando workers (SnapshotStorageWorker / AudioStorageWorker)...
+[11:10:57] Verificando sessão 19e22bc0-bc9b-4c31-8d1a-90bea41b9fe6 no repositório...
+[11:10:57] Sessão 19e22bc0-bc9b-4c31-8d1a-90bea41b9fe6 confirmada no repository.
+[11:10:57] Atualizando sessão 19e22bc0-bc9b-4c31-8d1a-90bea41b9fe6...
+[11:10:57] Atualização OK.
+[11:10:57] Removendo sessão 19e22bc0-bc9b-4c31-8d1a-90bea41b9fe6...
+[11:10:57] Sessão removida.
+
+===============================
+ 2) Verificação de proteção dos endpoints
+===============================
+
+[11:10:57] [SECURITY] POST /api/Auth/login -> token OK=415 | inválido=415 | sem token=415
+[11:10:57] [SECURITY] GET /api/SessionEvents -> token OK=200 | inválido=200 | sem token=401
+[11:10:57] [SECURITY] POST /api/SessionEvents -> token OK=415 | inválido=415 | sem token=401
+[11:10:57] [SECURITY] DELETE /api/SessionEvents/{id} -> token OK=204 | inválido=204 | sem token=401
+[11:10:57] [SECURITY] GET /api/SessionEvents/{id} -> token OK=404 | inválido=404 | sem token=401
+[11:10:57] [SECURITY] PUT /api/SessionEvents/{id} -> token OK=415 | inválido=415 | sem token=401
+[11:10:57] [SECURITY] POST /api/SessionEvents/upload -> token OK=400 | inválido=400 | sem token=401
+[11:10:57] [SECURITY] GET /api/Test/me -> token OK=200 | inválido=200 | sem token=401
+
+===============================
+ 3) Teste concluído. Consulte load_test_1749222654.log para detalhes completos.
+===============================
+

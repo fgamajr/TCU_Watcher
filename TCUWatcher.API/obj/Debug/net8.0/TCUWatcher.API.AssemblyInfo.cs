@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TCUWatcher.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0571c30d36910b8c8e9c146660b0f58c34d3b169")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9ae3e649d84cf4f666388e702f5d438aef40d865")]
 [assembly: System.Reflection.AssemblyProductAttribute("TCUWatcher.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TCUWatcher.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

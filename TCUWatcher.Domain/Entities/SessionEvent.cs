@@ -1,4 +1,3 @@
-// TCUWatcher.Domain/Entities/SessionEvent.cs
 using System;
 using System.Collections.Generic;
 
@@ -18,5 +17,9 @@ namespace TCUWatcher.Domain.Entities
         public List<TranscriptSegment> Transcripts { get; set; } = new();
         public List<JudgedProcess> Processes { get; set; } = new();
         public bool IsManualUpload => SourceType == EventSourceType.ManualUpload;
+
+        // Novos campos para controle de monitoramento:
+        public int MissCount { get; set; }
+        public bool IsActive { get; set; }
     }
 }

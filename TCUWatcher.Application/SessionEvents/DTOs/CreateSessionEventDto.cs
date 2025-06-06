@@ -1,4 +1,3 @@
-// TCUWatcher.Application/SessionEvents/DTOs/CreateSessionEventDto.cs
 using System;
 
 namespace TCUWatcher.Application.SessionEvents.DTOs

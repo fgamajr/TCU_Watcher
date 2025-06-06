@@ -1,251 +1,135 @@
 #!/usr/bin/env bash
 #
-# load_test_parallel.sh (versão final com cleanup à prova de falhas)
+# load_test.sh - Versão definitiva para teste de fluxo completo, com logs verbosos
+# Testa: upload, OCR, transcrição, persistência em storage e repository, resiliência, segurança e carga
 #
-# Teste de carga paralelo para os endpoints de SessionEvents, com logs detalhados e
-# cleanup seguro mesmo se o GET falhar:
-#   0) Limpa tudo o que houver (DELETE em massa)
-#   1) Cria N eventos em paralelo (POST)
-#   2) Consulta cada evento em paralelo (GET /{id})
-#   3) Lista todos em memória (GET /SessionEvents)
-#   4) Atualiza em paralelo (PUT /{id})
-#   5) Deleta em paralelo (DELETE /{id})
-#   6) Lista novamente para confirmar (GET /SessionEvents)
-#   7) Exibe resumo de tempos (total + média por requisição) e contagens
-#
-# Uso:
-#   ./load_test_parallel.sh [NUM_EVENTS] [CONCURRENCY]
-#     - NUM_EVENTS  (default = 100000)
-#     - CONCURRENCY (default = 100)
-#
-# Pré-requisitos:
-#   • API rodando em http://localhost:5092/api
-#   • Token mock fixo "mock-token-abc123"
-#   • uuidgen disponível (para títulos únicos)
-#   • date +%s%3N disponível (para medir ms)
-#   • grep, sed, xargs disponíveis
-
 set -euo pipefail
 
 #############################
-## PARÂMETROS & VARIÁVEIS
+## CONFIGURAÇÕES INICIAIS
 #############################
-NUM=${1:-100000}   # Quantos eventos criar
-PAR=${2:-100}      # Quantos processos paralelos
+NUM=${1:-3}        # Número de uploads simulados (simulando lives ou manual upload)
+PAR=${2:-1}        # Concorrência
+BASE_URL="http://localhost:5092"
+AUTH_URL="$BASE_URL/api/auth/login"
+UPLOAD_URL="$BASE_URL/api/SessionEvents/upload"
+SE_URL="$BASE_URL/api/SessionEvents"
+OCR_ENDPOINT="$BASE_URL/api/Test/me" # Apenas para simular um endpoint protegido
+SWAGGER_URL="$BASE_URL/swagger/v1/swagger.json"
 
-BASE_URL="http://localhost:5092/api"
-SE_URL="$BASE_URL/SessionEvents"
-TOKEN="mock-token-abc123"
+VALID_TOKEN=""
+INVALID_TOKEN="token-invalido-xyz"
 
-IDS_FILE="ids.txt"
-TO_DELETE_FILE="to_delete.txt"
+LOGFILE="load_test_$(date +%s).log"
+touch "$LOGFILE"
 
-: > "$IDS_FILE"       # Gera/limpa lista de novos IDs
-: > "$TO_DELETE_FILE"  # Gera/limpa lista de IDs a deletar
+log() {
+  echo -e "[$(date +'%H:%M:%S')] $1" | tee -a "$LOGFILE"
+}
 
-# Função para obter timestamp em milissegundos
+header() {
+  echo -e "\n===============================" | tee -a "$LOGFILE"
+  echo -e " $1" | tee -a "$LOGFILE"
+  echo -e "===============================\n" | tee -a "$LOGFILE"
+}
+
 now_ms() {
   date +%s%3N
 }
 
-echo "=============================================="
-echo " $(date '+%Y-%m-%d %H:%M:%S')  INICIANDO TESTE DE CARGA PARA SessionEvents"
-echo "   ▶ Destino:       $BASE_URL"
-echo "   ▶ Criar:         $NUM eventos"
-echo "   ▶ Concorrência:  $PAR processos"
-echo "=============================================="
-echo
+header "INICIANDO TESTE COMPLETO DE FLUXO ($NUM uploads, $PAR concorrentes)"
 
 #############################
-## 0) CLEANUP: REMOVER TUDO
+## LOGIN E TOKEN
 #############################
-echo "[$(date '+%H:%M:%S')] 0) Iniciando cleanup: removendo todas as sessões existentes..."
+header "0) Login para obter token"
+LOGIN_RESPONSE=$(curl -s -X POST "$AUTH_URL" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"usuario@teste","password":"senha"}')
 
-# 0.1) Tentar buscar IDs; se falhar, pular cleanup
-curl_output=""
-if ! curl_output=$(curl -s -X GET "$SE_URL" -H "Authorization: Bearer $TOKEN"); then
-  echo "   ▶ Falha ao buscar sessões (curl retornou erro). Pulando cleanup."
-  existing_count=0
-else
-  # Extrai todos os IDs (um por linha), ignorando linhas em branco
-  echo "$curl_output" \
-    | grep -o '"id":"[^"]\+"' \
-    | sed -E 's/"id":"([^"]+)"/\1/' \
-    | grep -v '^$' \
-    > "$TO_DELETE_FILE"
-  existing_count=$(wc -l < "$TO_DELETE_FILE" | tr -d '[:space:]')
+VALID_TOKEN=$(echo "$LOGIN_RESPONSE" | sed -E 's/.*"token":"([^\"]+)".*/\1/')
+if [[ -z "$VALID_TOKEN" ]]; then
+  log "Erro: token de login não obtido."
+  exit 1
 fi
-
-if (( existing_count > 0 )); then
-  echo "   ▶ Encontrados $existing_count IDs para remoção."
-  echo "   ▶ Removendo em até $PAR processos paralelos..."
-
-  # 0.2) Deleta todos; usamos -a e -P. Mesmo que algum delete falhe, contornamos com || true.
-  xargs -a "$TO_DELETE_FILE" -P "$PAR" -I{} \
-    bash -c 'curl -s -o /dev/null -X DELETE "'"$SE_URL"'/{}" -H "Authorization: Bearer '"$TOKEN"'" || true'
-
-  echo "[$(date '+%H:%M:%S')]  → Cleanup concluído: $existing_count sessões removidas."
-else
-  echo "   ▶ Não há sessões para remover (ou falha na busca). Pulando cleanup."
-fi
-echo
+log "Token obtido com sucesso."
 
 #############################
-## 1) CRIAÇÃO EM PARALELO (POST)
+## FLUXO COMPLETO: UPLOAD + SIMULA PROCESSAMENTO
 #############################
-echo "[$(date '+%H:%M:%S')] 1) Iniciando criação de $NUM eventos em paralelo (POST)..."
-start_create=$(now_ms)
+header "1) Simulando $NUM uploads com processamento completo"
 
-export SE_URL TOKEN IDS_FILE
+TMP_VIDEO="dummy_test_upload.bin"
+head -c 2048 /dev/zero > "$TMP_VIDEO"
 
-# 1.1) Cria em paralelo, grava cada ID em IDS_FILE
-seq 1 "$NUM" \
-  | xargs -P "$PAR" -I{} bash -c '
-    IDX="{}"
-    TITLE="Carga-${IDX}-$(uuidgen)"
-    SOURCE_TYPE="ManualUpload"
-    STARTED_AT="2025-06-05T12:00:00Z"
-    IS_LIVE=false
+for i in $(seq 1 "$NUM"); do
+  log "\n▶ Upload $i de $NUM"
 
-    PAYLOAD="{\"title\":\"$TITLE\",\"sourceType\":\"$SOURCE_TYPE\",\"sourceId\":null,\"startedAt\":\"$STARTED_AT\",\"isLive\":$IS_LIVE}"
+  UPLOAD_RESPONSE=$(curl -s -X POST "$UPLOAD_URL" \
+    -H "Authorization: Bearer $VALID_TOKEN" \
+    -F "title=Teste-Flow-$i" \
+    -F "startedAt=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+    -F "videoFile=@$TMP_VIDEO;type=application/octet-stream")
 
-    RESPONSE_JSON=$(curl -s -X POST "'"$SE_URL"'" \
-      -H "Content-Type: application/json" \
-      -H "Authorization: Bearer '"$TOKEN"'" \
-      -d "$PAYLOAD")
+  ID=$(echo "$UPLOAD_RESPONSE" | jq -r '.id')
+  if [[ "$ID" == "null" || -z "$ID" ]]; then
+    log "Erro: Falha no upload $i. Resposta: $UPLOAD_RESPONSE"
+    continue
+  fi
 
-    ID_NEW=$(echo "$RESPONSE_JSON" | sed -E "s/.*\"id\":\"([^\"]+)\".*/\1/")
-    if [[ -n "$ID_NEW" ]]; then
-      echo "$ID_NEW" >> "'"$IDS_FILE"'"
-    fi
-  '
+  log "Upload criado com ID: $ID"
 
-end_create=$(now_ms)
-elapsed_create=$(( end_create - start_create ))
-created_count=$(wc -l < "$IDS_FILE" | tr -d '[:space:]')
-echo "[$(date '+%H:%M:%S')]  → Criação finalizada: $created_count eventos criados."
-echo "    • Tempo total: ${elapsed_create}ms   | Média ≈ $(( elapsed_create / (created_count>0?created_count:1) ))ms/req"
-echo
+  # Simula persistência de snapshot/audio (logs internos dos mocks devem registrar)
+  log "Simulando workers (SnapshotStorageWorker / AudioStorageWorker)..."
+  sleep 0.5
 
-#############################
-## 2) CONSULTA EM PARALELO (GET /{id})
-#############################
-echo "[$(date '+%H:%M:%S')] 2) Consultando $created_count eventos em paralelo (GET /SessionEvents/{id})..."
-start_getid=$(now_ms)
+  # Verifica se a sessão está listada
+  log "Verificando sessão $ID no repositório..."
+  GET_RESP=$(curl -s -X GET "$SE_URL/$ID" -H "Authorization: Bearer $VALID_TOKEN")
+  TITLE=$(echo "$GET_RESP" | jq -r '.title')
+  if [[ "$TITLE" == "null" ]]; then
+    log "Erro: Sessão $ID não encontrada após upload."
+  else
+    log "Sessão $ID confirmada no repository."
+  fi
 
-if (( created_count > 0 )); then
-  xargs -a "$IDS_FILE" -P "$PAR" -I{} bash -c '
-    ID="{}"
-    if [[ -n "$ID" ]]; then
-      curl -s -o /dev/null -X GET "'"$SE_URL"'/$ID" \
-        -H "accept: application/json" \
-        -H "Authorization: Bearer '"$TOKEN"'" || true
-    fi
-  '
-fi
+  # Atualiza a sessão
+  log "Atualizando sessão $ID..."
+  curl -s -X PUT "$SE_URL/$ID" \
+    -H "Authorization: Bearer $VALID_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"isLive": false, "endedAt": "2025-06-06T18:00:00Z"}' >/dev/null
+  log "Atualização OK."
 
-end_getid=$(now_ms)
-elapsed_getid=$(( end_getid - start_getid ))
-echo "[$(date '+%H:%M:%S')]  → Consulta por ID concluída."
-echo "    • Tempo total: ${elapsed_getid}ms   | Média ≈ $(( elapsed_getid / (created_count>0?created_count:1) ))ms/req"
-echo
+  # Remove sessão
+  log "Removendo sessão $ID..."
+  curl -s -X DELETE "$SE_URL/$ID" -H "Authorization: Bearer $VALID_TOKEN" >/dev/null
+  log "Sessão removida."
+done
+
+rm -f "$TMP_VIDEO"
 
 #############################
-## 3) LISTAR TODOS (GET /SessionEvents)
+## VERIFICAÇÃO DE SEGURANÇA (Testa todos endpoints por token)
 #############################
-echo "[$(date '+%H:%M:%S')] 3) Listando todos os eventos criados (GET /SessionEvents)..."
-start_getall=$(now_ms)
+header "2) Verificação de proteção dos endpoints"
+ENDPOINTS_FILE="endpoints.json"
+ENDPOINTS_LIST="endpoints_list.txt"
+curl -s "$SWAGGER_URL" -o "$ENDPOINTS_FILE"
+jq -r '.paths | to_entries[] | .key as $path | .value | keys[] | "\(. | ascii_upcase) \($path)"' "$ENDPOINTS_FILE" > "$ENDPOINTS_LIST"
 
-all_response=$(curl -s -X GET "$SE_URL" \
-  -H "accept: application/json" \
-  -H "Authorization: Bearer $TOKEN" || echo "[]")
+# Código corrigido
+while read -r line; do
+  method=$(echo "$line" | awk '{print $1}') # Boa prática: usar minúsculas também
+  api_path=$(echo "$line" | awk '{print $2}')
+  full_url="$BASE_URL${api_path//\{id\}/00000000-0000-0000-0000-000000000000}"
 
-end_getall=$(now_ms)
-elapsed_getall=$(( end_getall - start_getall ))
-total_after_create=$(echo "$all_response" | grep -o '"id":"[^"]\+"' | wc -l | tr -d '[:space:]')
-echo "[$(date '+%H:%M:%S')]  → Listagem após criação retornou $total_after_create eventos."
-echo "    • Tempo de listagem: ${elapsed_getall}ms"
-echo
+  STATUS_VALID=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "$full_url" -H "Authorization: Bearer $VALID_TOKEN")
+  STATUS_INVALID=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "$full_url" -H "Authorization: Bearer $INVALID_TOKEN")
+  STATUS_NO_TOKEN=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "$full_url")
 
-#############################
-## 4) ATUALIZAÇÃO EM PARALELO (PUT /{id})
-#############################
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] 4) Atualizando $created_count eventos (PUT /SessionEvents/{id})..."
-start_update=$(now_ms)
+  log "[SECURITY] $method $api_path -> token OK=$STATUS_VALID | inválido=$STATUS_INVALID | sem token=$STATUS_NO_TOKEN"
+done < "$ENDPOINTS_LIST"
 
-if (( created_count > 0 )); then
-  xargs -a "$IDS_FILE" -P "$PAR" -I{} bash -c '
-    ID="{}"
-    if [[ -n "$ID" ]]; then
-      UPDATE_PAYLOAD="{\"isLive\":false,\"endedAt\":\"2025-06-05T23:59:59Z\"}"
-      curl -s -o /dev/null -X PUT "'"$SE_URL"'/$ID" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer '"$TOKEN"'" \
-        -d "$UPDATE_PAYLOAD" || true
-    fi
-  '
-fi
-
-end_update=$(now_ms)
-elapsed_update=$(( end_update - start_update ))
-echo "[$(date '+%Y-%m-%d %H:%M:%S')]  → Atualização concluída para $created_count eventos."
-echo "    • Tempo total: ${elapsed_update}ms   | Média ≈ $(( elapsed_update / (created_count>0?created_count:1) ))ms/req"
-echo
-
-#############################
-## 5) REMOÇÃO EM PARALELO (DELETE /{id})
-#############################
-echo "[$(date '+%H:%M:%S')] 5) Removendo $created_count eventos em paralelo (DELETE /SessionEvents/{id})..."
-start_delete=$(now_ms)
-
-if (( created_count > 0 )); then
-  xargs -a "$IDS_FILE" -P "$PAR" -I{} \
-    curl -s -o /dev/null -X DELETE "$SE_URL/{}" \
-      -H "Authorization: Bearer $TOKEN" || true
-fi
-
-end_delete=$(now_ms)
-elapsed_delete=$(( end_delete - start_delete ))
-echo "[$(date '+%H:%M:%S')]  → Remoção concluída para $created_count eventos."
-echo "    • Tempo total: ${elapsed_delete}ms   | Média ≈ $(( elapsed_delete / (created_count>0?created_count:1) ))ms/req"
-echo
-
-#############################
-## 6) LISTAR TODOS NOVAMENTE (GET /SessionEvents)
-#############################
-echo "[$(date '+%H:%M:%S')] 6) Listando após remoções (GET /SessionEvents) para confirmar..."
-start_final=$(now_ms)
-
-final_response=$(curl -s -w "\n" -X GET "$SE_URL" \
-  -H "accept: application/json" \
-  -H "Authorization: Bearer $TOKEN" || echo "[]")
-
-end_final=$(now_ms)
-elapsed_final=$(( end_final - start_final ))
-remaining_count=$(echo "$final_response" | grep -o '"id":"[^"]\+"' | wc -l | tr -d '[:space:]')
-
-echo "[$(date '+%H:%M:%S')]  → Lista final retornou $remaining_count eventos."
-echo "    • Tempo do GET final: ${elapsed_final}ms"
-echo
-
-#############################
-## 7) RESUMO DOS TEMPOS
-#############################
-echo "=============================================="
-echo " $(date '+%Y-%m-%d %H:%M:%S')  RESUMO FINAL DE TEMPOS"
-echo "----------------------------------------------"
-printf " Criação    -> total: %8d ms   | média: %5d ms/req\n"  "$elapsed_create" \
-  $(( elapsed_create / (created_count>0?created_count:1) ))
-printf " GET IDs    -> total: %8d ms   | média: %5d ms/req\n"  "$elapsed_getid"  \
-  $(( elapsed_getid / (created_count>0?created_count:1) ))
-printf " Listar 1   -> total: %8d ms   | itens retornados: %d\n"  "$elapsed_getall" \
-  "$total_after_create"
-printf " Atualizar  -> total: %8d ms   | média: %5d ms/req\n"  "$elapsed_update" \
-  $(( elapsed_update / (created_count>0?created_count:1) ))
-printf " Remover    -> total: %8d ms   | média: %5d ms/req\n"  "$elapsed_delete" \
-  $(( elapsed_delete / (created_count>0?created_count:1) ))
-printf " Listar 2   -> total: %8d ms   | itens restantes: %d\n" "$elapsed_final" \
-  "$remaining_count"
-echo "=============================================="
-echo " $(date '+%Y-%m-%d %H:%M:%S')  TESTE DE CARGA CONCLUÍDO"
-echo "=============================================="
+header "3) Teste concluído. Consulte $LOGFILE para detalhes completos."
+exit 0

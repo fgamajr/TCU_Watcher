@@ -1,4 +1,3 @@
-// TCUWatcher.Domain/Repositories/ISessionEventRepository.cs
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TCUWatcher.Domain.Entities;

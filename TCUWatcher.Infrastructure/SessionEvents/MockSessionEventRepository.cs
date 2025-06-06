@@ -1,4 +1,5 @@
-// TCUWatcher.Infrastructure/SessionEvents/MockSessionEventRepository.cs
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,53 +8,58 @@ using TCUWatcher.Domain.Repositories;
 
 namespace TCUWatcher.Infrastructure.SessionEvents
 {
+    /// <summary>
+    /// Armazena SessionEvent em memória, usando um ConcurrentDictionary.
+    /// </summary>
     public class MockSessionEventRepository : ISessionEventRepository
     {
-        private static readonly List<SessionEvent> _events = new();
-
-        public Task<SessionEvent?> GetByIdAsync(string id)
-        {
-            var evt = _events.FirstOrDefault(e => e.Id == id);
-            return Task.FromResult<SessionEvent?>(evt);
-        }
-
-        public Task<SessionEvent?> GetBySourceIdAsync(string sourceId)
-        {
-            var evt = _events.FirstOrDefault(e => e.SourceId == sourceId);
-            return Task.FromResult<SessionEvent?>(evt);
-        }
-
-        public Task<IEnumerable<SessionEvent>> GetAllAsync()
-        {
-            return Task.FromResult<IEnumerable<SessionEvent>>(_events);
-        }
-
-        public Task<IEnumerable<SessionEvent>> GetActiveAsync()
-        {
-            var active = _events.Where(e => e.IsLive && e.EndedAt == null);
-            return Task.FromResult<IEnumerable<SessionEvent>>(active);
-        }
+        // chave = SessionEvent.Id, valor = SessionEvent
+        private static readonly ConcurrentDictionary<string, SessionEvent> _storage 
+            = new ConcurrentDictionary<string, SessionEvent>();
 
         public Task AddAsync(SessionEvent sessionEvent)
         {
-            _events.Add(sessionEvent);
-            return Task.CompletedTask;
-        }
-
-        public Task UpdateAsync(SessionEvent sessionEvent)
-        {
-            var idx = _events.FindIndex(e => e.Id == sessionEvent.Id);
-            if (idx >= 0) _events[idx] = sessionEvent;
+            if (sessionEvent == null) throw new ArgumentNullException(nameof(sessionEvent));
+            _storage[sessionEvent.Id] = sessionEvent;
             return Task.CompletedTask;
         }
 
         public Task DeleteAsync(string id)
         {
-            var idx = _events.FindIndex(e => e.Id == id);
-            if (idx >= 0)
-            {
-                _events.RemoveAt(idx);
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            _storage.TryRemove(id, out _);
+            return Task.CompletedTask;
+        }
+
+        public Task<IEnumerable<SessionEvent>> GetActiveAsync()
+        {
+            var active = _storage.Values.Where(e => e.IsActive);
+            return Task.FromResult(active);
+        }
+
+        public Task<IEnumerable<SessionEvent>> GetAllAsync()
+        {
+            return Task.FromResult<IEnumerable<SessionEvent>>(_storage.Values.ToList());
+        }
+
+        public Task<SessionEvent?> GetByIdAsync(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            _storage.TryGetValue(id, out var ev);
+            return Task.FromResult(ev);
+        }
+
+        public Task<SessionEvent?> GetBySourceIdAsync(string sourceId)
+        {
+            if (string.IsNullOrWhiteSpace(sourceId)) throw new ArgumentNullException(nameof(sourceId));
+            var ev = _storage.Values.FirstOrDefault(x => x.SourceId == sourceId);
+            return Task.FromResult(ev);
+        }
+
+        public Task UpdateAsync(SessionEvent sessionEvent)
+        {
+            if (sessionEvent == null) throw new ArgumentNullException(nameof(sessionEvent));
+            _storage[sessionEvent.Id] = sessionEvent;
             return Task.CompletedTask;
         }
     }

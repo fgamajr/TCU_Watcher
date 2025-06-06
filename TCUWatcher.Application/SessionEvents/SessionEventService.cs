@@ -1,94 +1,104 @@
-// TCUWatcher.Application/SessionEvents/SessionEventService.cs
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using TCUWatcher.Application.SessionEvents.DTOs;
 using TCUWatcher.Domain.Entities;
 using TCUWatcher.Domain.Repositories;
+using TCUWatcher.Domain.Services;
 
 namespace TCUWatcher.Application.SessionEvents
 {
     public class SessionEventService : ISessionEventService
     {
-        private readonly ISessionEventRepository _repository;
+        private readonly ISessionEventRepository _repo;
+        private readonly IStorageService _storageService;
+        // Futuramente poderão ser injetados _photographerService, _audioCaptureService, buffers, etc.
 
-        public SessionEventService(ISessionEventRepository repository)
+        public SessionEventService(
+            ISessionEventRepository repo,
+            IStorageService storageService)
         {
-            _repository = repository;
-        }
-
-        public async Task<IEnumerable<SessionEventDto>> GetAllAsync()
-        {
-            var events = await _repository.GetAllAsync();
-            return events.Select(e => new SessionEventDto
-            {
-                Id = e.Id,
-                Title = e.Title,
-                SourceType = e.SourceType.ToString(),
-                SourceId = e.SourceId,
-                IsLive = e.IsLive,
-                StartedAt = e.StartedAt,
-                EndedAt = e.EndedAt
-            });
-        }
-
-        public async Task<SessionEventDto?> GetByIdAsync(string id)
-        {
-            var e = await _repository.GetByIdAsync(id);
-            if (e == null) return null;
-            return new SessionEventDto
-            {
-                Id = e.Id,
-                Title = e.Title,
-                SourceType = e.SourceType.ToString(),
-                SourceId = e.SourceId,
-                IsLive = e.IsLive,
-                StartedAt = e.StartedAt,
-                EndedAt = e.EndedAt
-            };
+            _repo = repo;
+            _storageService = storageService;
         }
 
         public async Task<SessionEventDto> CreateAsync(CreateSessionEventDto input)
         {
-            var newEvent = new SessionEvent
+            // Implementação existente ou stub
+            var sessionEvent = new SessionEvent
             {
                 Id = Guid.NewGuid().ToString(),
                 Title = input.Title,
-                SourceType = Enum.TryParse<EventSourceType>(input.SourceType, true, out var st)
-                             ? st : EventSourceType.Other,
+                SourceType = Enum.Parse<EventSourceType>(input.SourceType),
                 SourceId = input.SourceId,
+                Url = null,
                 StartedAt = input.StartedAt,
+                EndedAt = null,
                 IsLive = input.IsLive,
-                EndedAt = null
+                MissCount = 0,
+                IsActive = input.IsLive
             };
-            await _repository.AddAsync(newEvent);
+
+            await _repo.AddAsync(sessionEvent);
 
             return new SessionEventDto
             {
-                Id = newEvent.Id,
-                Title = newEvent.Title,
-                SourceType = newEvent.SourceType.ToString(),
-                SourceId = newEvent.SourceId,
-                IsLive = newEvent.IsLive,
-                StartedAt = newEvent.StartedAt,
-                EndedAt = newEvent.EndedAt
+                Id = sessionEvent.Id,
+                Title = sessionEvent.Title,
+                SourceType = sessionEvent.SourceType.ToString(),
+                SourceId = sessionEvent.SourceId,
+                IsLive = sessionEvent.IsLive,
+                StartedAt = sessionEvent.StartedAt,
+                EndedAt = sessionEvent.EndedAt
             };
+        }
+
+        public async Task DeleteAsync(string id)
+        {
+            await _repo.DeleteAsync(id);
+        }
+
+        public async Task<SessionEventDto?> GetByIdAsync(string id)
+        {
+            var ev = await _repo.GetByIdAsync(id);
+            if (ev == null) return null;
+            return new SessionEventDto
+            {
+                Id = ev.Id,
+                Title = ev.Title,
+                SourceType = ev.SourceType.ToString(),
+                SourceId = ev.SourceId,
+                IsLive = ev.IsLive,
+                StartedAt = ev.StartedAt,
+                EndedAt = ev.EndedAt
+            };
+        }
+
+        public async Task<IEnumerable<SessionEventDto>> GetAllAsync()
+        {
+            var all = await _repo.GetAllAsync();
+            var result = all.Select(ev => new SessionEventDto
+            {
+                Id = ev.Id,
+                Title = ev.Title,
+                SourceType = ev.SourceType.ToString(),
+                SourceId = ev.SourceId,
+                IsLive = ev.IsLive,
+                StartedAt = ev.StartedAt,
+                EndedAt = ev.EndedAt
+            });
+            return result;
         }
 
         public async Task<SessionEventDto?> UpdateAsync(string id, UpdateSessionEventDto input)
         {
-            var existing = await _repository.GetByIdAsync(id);
-            if (existing == null)
-                return null;
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null) return null;
 
-            if (input.IsLive.HasValue)
-                existing.IsLive = input.IsLive.Value;
-
-            if (input.EndedAt.HasValue)
-                existing.EndedAt = input.EndedAt.Value;
-
-            await _repository.UpdateAsync(existing);
+            existing.IsLive = input.IsLive;
+            existing.EndedAt = input.EndedAt;
+            // Ajustar outros campos se necessário
+            await _repo.UpdateAsync(existing);
 
             return new SessionEventDto
             {
@@ -102,14 +112,72 @@ namespace TCUWatcher.Application.SessionEvents
             };
         }
 
-        public async Task<bool> DeleteAsync(string id)
+        public async Task<SessionEventDto> CreateWithUploadAsync(CreateSessionEventWithUploadDto input)
         {
-            var existing = await _repository.GetByIdAsync(id);
-            if (existing == null)
-                return false;
+            var nowUtc = DateTime.UtcNow;
+            var sessionEvent = new SessionEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = input.Title,
+                SourceType = EventSourceType.ManualUpload,
+                SourceId = input.StorageKey,
+                Url = null,
+                StartedAt = input.StartedAt ?? nowUtc,
+                EndedAt = input.StartedAt ?? nowUtc,
+                IsLive = false,
+                MissCount = 2,
+                IsActive = false
+            };
 
-            await _repository.DeleteAsync(id);
-            return true;
+            await _repo.AddAsync(sessionEvent);
+
+            // Disparar processamento assíncrono (upload já está no Storage)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Ler do storage
+                    using var vidStream = await _storageService.ReadAsync(input.StorageKey);
+
+                    // Exemplo simplificado: tirar apenas UM snapshot no início
+                    vidStream.Position = 0;
+                    // Chamada fictícia, implementar _photographerService depois
+                    // var snapshot = await _photographerService.CaptureSnapshotFromStorageKeyAsync(
+                    //     input.StorageKey, TimeSpan.Zero, CancellationToken.None);
+                    //
+                    // _snapshotBuffer.Writer.TryWrite(new SnapshotItem
+                    // {
+                    //     SessionEventId = sessionEvent.Id,
+                    //     ImageBytes = snapshot.ToArray(),
+                    //     CapturedAt = DateTime.UtcNow
+                    // });
+
+                    // Extrair todo o áudio em memória
+                    // var recId = await _audioCaptureService.StartRecordingFromStorageKeyAsync(input.StorageKey, CancellationToken.None);
+                    // var audioStream = await _audioCaptureService.StopRecordingAsync(recId, CancellationToken.None);
+                    // _audioBuffer.Writer.TryWrite(new AudioChunk
+                    // {
+                    //     SessionEventId = sessionEvent.Id,
+                    //     AudioBytes = audioStream.ToArray(),
+                    //     SegmentStart = TimeSpan.Zero
+                    // });
+                }
+                catch
+                {
+                    // Log de erro, se quiser
+                }
+            });
+
+            return new SessionEventDto
+            {
+                Id = sessionEvent.Id,
+                Title = sessionEvent.Title,
+                SourceType = sessionEvent.SourceType.ToString(),
+                SourceId = sessionEvent.SourceId,
+                IsLive = sessionEvent.IsLive,
+                StartedAt = sessionEvent.StartedAt,
+                EndedAt = sessionEvent.EndedAt
+            };
         }
     }
 }
