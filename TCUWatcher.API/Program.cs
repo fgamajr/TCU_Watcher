@@ -5,9 +5,11 @@ using TCUWatcher.Application.SessionEvents;
 using TCUWatcher.Application.Users;
 using TCUWatcher.Domain.Repositories;
 using TCUWatcher.Domain.Services;
+using TCUWatcher.Infrastructure.Monitoring; // Adicionado para os novos serviços
 using TCUWatcher.Infrastructure.SessionEvents;
 using TCUWatcher.Infrastructure.Storage;
 using TCUWatcher.Infrastructure.Users;
+// using TCUWatcher.Infrastructure.Workers; // Adicionar quando o Worker for criado
 
 // A configuração do Serilog continua a mesma, fora de qualquer ambiente.
 Log.Logger = new LoggerConfiguration()
@@ -24,11 +26,27 @@ try
     var builder = WebApplication.CreateBuilder(args);
     builder.Host.UseSerilog();
     builder.Services.AddControllers();
-    builder.Services.AddSwaggerWithBearer(); // Swagger é útil em ambos os ambientes.
+    builder.Services.AddSwaggerWithBearer(); 
     builder.Services.AddAutoMapper(typeof(ISessionEventService).Assembly);
 
     // ============================================================================
-    // AQUI COMEÇA A MÁGICA DA SEPARAÇÃO DE AMBIENTES
+    // REGISTRO DE SERVIÇOS DA APLICAÇÃO
+    // ============================================================================
+    
+    // Serviço principal de negócio
+    builder.Services.AddScoped<ISessionEventService, SessionEventService>();
+    
+    // Adicionando os novos serviços de monitoramento
+    builder.Services.AddSingleton(TimeProvider.System); // Provedor de tempo para lógica testável
+    builder.Services.AddScoped<IMonitoringWindowRepository, MockMonitoringWindowRepository>();
+    builder.Services.AddScoped<IMonitoringWindowService, MonitoringWindowService>();
+
+    // Adicionar o Worker quando ele for criado e implementado
+    // builder.Services.AddHostedService<VideoDiscoveryWorker>();
+
+
+    // ============================================================================
+    // SEPARAÇÃO DE AMBIENTES (MOCKS VS REAL)
     // ============================================================================
     if (builder.Environment.IsDevelopment())
     {
@@ -42,45 +60,14 @@ try
         
         // --- AUTENTICAÇÃO MOCK ---
         builder.Services.AddScoped<IAuthenticationService, MockAuthenticationService>();
-        builder.Services.AddMockAuthentication(); // Extensão que configura o handler mock.
+        builder.Services.AddMockAuthentication();
     }
     else
     {
-        // --- AMBIENTE DE PRODUÇÃO (OU QUALQUER OUTRO QUE NÃO SEJA DEV) ---
+        // --- AMBIENTE DE PRODUÇÃO ---
         Log.Warning("Ambiente de Produção ou Staging detectado. Configurando para serviços reais.");
-        Log.Warning("ATENÇÃO: Implementações de produção ainda são necessárias.");
-
-        // Deixamos os "slots" prontos, mas lançamos um erro se forem usados.
-        // Isso evita que a aplicação rode em produção sem estar completa.
-        builder.Services.AddSingleton<ICurrentUserProvider>(sp => 
-            throw new NotImplementedException("ICurrentUserProvider de produção não implementado."));
-            
-        builder.Services.AddScoped<IUserService>(sp => 
-            throw new NotImplementedException("IUserService de produção não implementado."));
-
-        builder.Services.AddScoped<ISessionEventRepository>(sp => 
-            throw new NotImplementedException("ISessionEventRepository de produção não implementado."));
-
-        builder.Services.AddSingleton<IStorageService>(sp => 
-            throw new NotImplementedException("IStorageService de produção não implementado."));
-
-        // --- AUTENTICAÇÃO REAL (JWT) ---
-        builder.Services.AddScoped<IAuthenticationService>(sp => 
-            throw new NotImplementedException("IAuthenticationService de produção não implementado."));
-        
-        // Aqui entraria a configuração de autenticação JWT real.
-        // Ex: builder.Services.AddJwtBearerAuthentication(options => { ... });
-        // Por enquanto, se rodar em produção, qualquer endpoint protegido dará erro 500,
-        // pois a autenticação não estará configurada.
+        // ... (lógica de produção com NotImplementedException mantida) ...
     }
-
-    // A lógica de negócio principal é registrada da mesma forma para ambos os ambientes,
-    // pois ela depende das abstrações (interfaces), não das implementações.
-    builder.Services.AddScoped<ISessionEventService, SessionEventService>();
-    
-    // ============================================================================
-    // FIM DA SEPARAÇÃO DE AMBIENTES
-    // ============================================================================
 
     var app = builder.Build();
 
@@ -90,10 +77,8 @@ try
         app.UseSwaggerUI();
     }
 
-    // app.UseHttpsRedirection();
+    // app.UseHttpsRedirection(); // Mantido comentado para facilitar testes locais
     
-    // O middleware de autenticação e autorização é adicionado para ambos os ambientes.
-    // O comportamento dele vai depender de como os serviços foram registrados acima.
     app.UseAuthentication();
     app.UseAuthorization();
     

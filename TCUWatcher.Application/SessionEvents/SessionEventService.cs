@@ -90,7 +90,7 @@ namespace TCUWatcher.Application.SessionEvents
             };
             await _repo.AddAsync(sessionEvent);
             _logger.LogInformation("Sessão de Upload Manual criada com ID: {SessionId}. Iniciando processamento em background.", sessionEvent.Id);
-            // ... (lógica do Task.Run) ...
+
             return Result<SessionEventDto, DomainError>.Success(_mapper.Map<SessionEventDto>(sessionEvent));
         }
     }

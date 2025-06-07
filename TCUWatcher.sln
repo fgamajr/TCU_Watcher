@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCUWatcher.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCUWatcher.API", "TCUWatcher.API\TCUWatcher.API.csproj", "{8772720B-83E9-45DA-8901-2D17CFF914CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCUWatcher.Tests", "TCUWatcher.Tests\TCUWatcher.Tests.csproj", "{18BFEB1E-81C4-464B-A3DB-2CD606A6E20D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{8772720B-83E9-45DA-8901-2D17CFF914CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8772720B-83E9-45DA-8901-2D17CFF914CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8772720B-83E9-45DA-8901-2D17CFF914CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18BFEB1E-81C4-464B-A3DB-2CD606A6E20D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18BFEB1E-81C4-464B-A3DB-2CD606A6E20D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18BFEB1E-81C4-464B-A3DB-2CD606A6E20D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18BFEB1E-81C4-464B-A3DB-2CD606A6E20D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

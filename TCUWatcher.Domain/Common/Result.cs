@@ -1,3 +1,5 @@
+using System;
+
 namespace TCUWatcher.Domain.Common;
 
 public readonly record struct Result<TSuccess, TError>
@@ -13,8 +15,8 @@ public readonly record struct Result<TSuccess, TError>
     public static Result<TSuccess,TError> Success(TSuccess value) => new(value);
     public static Result<TSuccess,TError> Failure(TError error)   => new(error);
 
-    public TSuccess Value => IsSuccess ? _value! : throw new InvalidOperationException();
-    public TError   Error => IsFailure ? _error! : throw new InvalidOperationException();
+    public TSuccess Value => IsSuccess ? _value! : throw new InvalidOperationException("Não se pode acessar Value em um Result de falha.");
+    public TError   Error => IsFailure ? _error! : throw new InvalidOperationException("Não se pode acessar Error em um Result de sucesso.");
 
     public TResult Match<TResult>(Func<TSuccess,TResult> ok, Func<TError,TResult> fail)
         => IsSuccess ? ok(Value) : fail(Error);

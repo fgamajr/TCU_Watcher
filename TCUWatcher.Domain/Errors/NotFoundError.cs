@@ -1,5 +1,3 @@
-using System;
-
 namespace TCUWatcher.Domain.Errors;
 
 public sealed record NotFoundError(string ResourceType, string ResourceId)
