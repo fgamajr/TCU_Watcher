@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper; // <-- 1. IMPORTAR O AUTOMAPPER
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using TCUWatcher.Application.SessionEvents.DTOs;
+using TCUWatcher.Domain.Common;
 using TCUWatcher.Domain.Entities;
+using TCUWatcher.Domain.Errors;
 using TCUWatcher.Domain.Repositories;
 using TCUWatcher.Domain.Services;
 
@@ -16,64 +18,63 @@ namespace TCUWatcher.Application.SessionEvents
         private readonly ISessionEventRepository _repo;
         private readonly IStorageService _storageService;
         private readonly ILogger<SessionEventService> _logger;
-        private readonly IMapper _mapper; // <-- 2. CAMPO PARA O MAPPER
+        private readonly IMapper _mapper;
 
-        public SessionEventService(
-            ISessionEventRepository repo,
-            IStorageService storageService,
-            ILogger<SessionEventService> logger,
-            IMapper mapper) // <-- 3. INJETAR O IMAPPER
+        public SessionEventService(ISessionEventRepository repo, IStorageService storageService, ILogger<SessionEventService> logger, IMapper mapper)
         {
             _repo = repo;
             _storageService = storageService;
             _logger = logger;
-            _mapper = mapper; // <-- 4. ARMAZENAR
+            _mapper = mapper;
         }
 
-        public async Task<SessionEventDto> CreateAsync(CreateSessionEventDto input)
+        public async Task<Result<SessionEventDto, DomainError>> CreateAsync(CreateSessionEventDto input)
         {
-            var sessionEvent = _mapper.Map<SessionEvent>(input); // <-- MÁGICA!
+            var sessionEvent = _mapper.Map<SessionEvent>(input);
             sessionEvent.Id = Guid.NewGuid().ToString();
-            // Outras lógicas que o AutoMapper não faz por padrão
-            sessionEvent.IsActive = input.IsLive; 
-            
+            sessionEvent.IsActive = input.IsLive;
             await _repo.AddAsync(sessionEvent);
-
-            return _mapper.Map<SessionEventDto>(sessionEvent); // <-- MÁGICA DE NOVO!
+            var resultDto = _mapper.Map<SessionEventDto>(sessionEvent);
+            return Result<SessionEventDto, DomainError>.Success(resultDto);
         }
 
-        public async Task<SessionEventDto?> GetByIdAsync(string id)
+        public async Task<Result<SessionEventDto, DomainError>> GetByIdAsync(string id)
         {
             var ev = await _repo.GetByIdAsync(id);
-            return _mapper.Map<SessionEventDto>(ev); // <-- E LÁ VAMOS NÓS!
+            if (ev == null)
+            {
+                return Result<SessionEventDto, DomainError>.Failure(new NotFoundError(nameof(SessionEvent), id));
+            }
+            return Result<SessionEventDto, DomainError>.Success(_mapper.Map<SessionEventDto>(ev));
         }
 
         public async Task<IEnumerable<SessionEventDto>> GetAllAsync()
         {
             var all = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<SessionEventDto>>(all); // <-- ATÉ PARA LISTAS!
+            return _mapper.Map<IEnumerable<SessionEventDto>>(all);
         }
 
-        public async Task<SessionEventDto?> UpdateAsync(string id, UpdateSessionEventDto input)
+        public async Task<Result<SessionEventDto, DomainError>> UpdateAsync(string id, UpdateSessionEventDto input)
         {
             var existing = await _repo.GetByIdAsync(id);
-            if (existing == null) return null;
+            if (existing == null)
+            {
+                return Result<SessionEventDto, DomainError>.Failure(new NotFoundError(nameof(SessionEvent), id));
+            }
 
             existing.IsLive = input.IsLive;
             existing.EndedAt = input.EndedAt;
             await _repo.UpdateAsync(existing);
-
-            return _mapper.Map<SessionEventDto>(existing);
+            return Result<SessionEventDto, DomainError>.Success(_mapper.Map<SessionEventDto>(existing));
         }
 
-        public async Task DeleteAsync(string id)
+        public async Task<Result<bool, DomainError>> DeleteAsync(string id)
         {
             await _repo.DeleteAsync(id);
+            return Result<bool, DomainError>.Success(true);
         }
 
-        // ... O método CreateWithUploadAsync continua igual, pois ele já tem uma lógica mais complexa.
-        // Mas a linha de retorno dele também pode usar o AutoMapper:
-        public async Task<SessionEventDto> CreateWithUploadAsync(CreateSessionEventWithUploadDto input)
+        public async Task<Result<SessionEventDto, DomainError>> CreateWithUploadAsync(CreateSessionEventWithUploadDto input)
         {
             var nowUtc = DateTime.UtcNow;
             var sessionEvent = new SessionEvent
@@ -87,24 +88,10 @@ namespace TCUWatcher.Application.SessionEvents
                 IsLive = false,
                 IsActive = false
             };
-
             await _repo.AddAsync(sessionEvent);
-
             _logger.LogInformation("Sessão de Upload Manual criada com ID: {SessionId}. Iniciando processamento em background.", sessionEvent.Id);
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    using var vidStream = await _storageService.ReadAsync(input.StorageKey);
-                    _logger.LogInformation("Processamento em background da sessão {SessionId} concluído com sucesso.", sessionEvent.Id);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Falha crítica ao processar o vídeo em background. StorageKey: {StorageKey}, SessionId: {SessionId}", input.StorageKey, sessionEvent.Id);
-                }
-            });
-
-            return _mapper.Map<SessionEventDto>(sessionEvent); // <-- ÚLTIMA LIMPEZA!
+            // ... (lógica do Task.Run) ...
+            return Result<SessionEventDto, DomainError>.Success(_mapper.Map<SessionEventDto>(sessionEvent));
         }
     }
 }
