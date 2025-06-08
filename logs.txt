@@ -1,5 +1,293 @@
 Building...
-/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/BackgroundServices/VideoDiscoveryWorker.cs(14,37): error CS0118: 'BackgroundService' is a namespace but is used like a type [/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/TCUWatcher.Infrastructure.csproj]
-/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/Workers/AudioStorageWorker.cs(9,39): error CS0118: 'BackgroundService' is a namespace but is used like a type [/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/TCUWatcher.Infrastructure.csproj]
-/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/Workers/SnapshotStorageWorker.cs(9,42): error CS0118: 'BackgroundService' is a namespace but is used like a type [/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/TCUWatcher.Infrastructure.csproj]
-/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/BackgroundServices/LiveDetectionService.cs(16,41): error CS0118: 'BackgroundService' is a namespace but is used like a type [/home/fgamajr/dev/TCUWatcher/TCUWatcher.Infrastructure/TCUWatcher.Infrastructure.csproj]
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.API/Authentication/MockAuthenticationHandler.cs(23,13): warning CS0618: 'ISystemClock' is obsolete: 'Use TimeProvider instead.' [/home/fgamajr/dev/TCUWatcher/TCUWatcher.API/TCUWatcher.API.csproj]
+/home/fgamajr/dev/TCUWatcher/TCUWatcher.API/Authentication/MockAuthenticationHandler.cs(25,13): warning CS0618: 'AuthenticationHandler<AuthenticationSchemeOptions>.AuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions>, ILoggerFactory, UrlEncoder, ISystemClock)' is obsolete: 'ISystemClock is obsolete, use TimeProvider on AuthenticationSchemeOptions instead.' [/home/fgamajr/dev/TCUWatcher/TCUWatcher.API/TCUWatcher.API.csproj]
+[09:55:30 INF] Iniciando a aplicação TCUWatcher.API...
+[09:55:30 INF] Ambiente de Desenvolvimento detectado. Usando serviços MOCK.
+[09:55:31 INF] User profile is available. Using '/home/fgamajr/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+[09:55:31 INF] LiveDetectionService iniciado. Verificando sessões a cada 30 minutos.
+[09:55:31 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 13:55:31)
+[09:55:31 INF] A próxima verificação ocorrerá em 30 minutos...
+[09:55:31 INF] SyncService iniciado.
+[09:55:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[09:55:31 INF] Now listening on: http://localhost:5092
+[09:55:31 INF] Application started. Press Ctrl+C to shut down.
+[09:55:31 INF] Hosting environment: Development
+[09:55:31 INF] Content root path: /home/fgamajr/dev/TCUWatcher/TCUWatcher.API
+[09:56:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[09:57:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[09:58:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[09:59:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:00:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:01:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:02:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:03:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:04:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:05:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:06:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:07:31 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:08:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:09:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:10:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:11:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:12:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:13:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:14:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:15:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:16:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:17:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:18:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:19:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:20:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:21:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:22:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:23:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:24:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:25:30 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 14:25:30)
+[10:25:30 INF] A próxima verificação ocorrerá em 30 minutos...
+[10:25:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:26:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:27:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:28:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:29:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:30:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:31:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:32:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:33:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:34:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:35:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:36:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:37:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:38:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:39:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:40:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:41:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:42:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:43:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:44:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:45:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:46:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:47:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:48:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:49:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:50:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:51:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:52:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:53:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:54:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:55:29 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 14:55:29)
+[10:55:29 INF] A próxima verificação ocorrerá em 30 minutos...
+[10:55:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:56:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:57:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:58:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[10:59:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:00:30 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:01:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:02:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:03:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:04:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:05:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:06:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:07:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:08:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:09:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:10:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:11:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:12:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:13:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:14:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:15:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:16:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:17:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:18:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:19:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:20:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:21:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:22:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:23:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:24:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:25:28 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 15:25:28)
+[11:25:28 INF] A próxima verificação ocorrerá em 30 minutos...
+[11:25:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:26:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:27:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:28:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:29:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:30:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:31:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:32:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:33:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:34:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:35:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:36:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:37:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:38:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:39:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:40:29 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:41:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:42:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:43:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:44:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:45:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:46:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:47:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:48:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:49:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:50:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:51:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:52:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:53:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:54:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:55:27 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 15:55:27)
+[11:55:27 INF] A próxima verificação ocorrerá em 30 minutos...
+[11:55:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:56:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:57:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:58:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[11:59:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:00:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:01:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:02:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:03:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:04:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:05:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:06:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:07:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:08:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:09:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:10:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:11:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:12:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:13:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:14:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:15:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:16:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:17:28 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:18:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:19:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:20:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:21:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:22:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:23:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:24:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:25:26 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 16:25:26)
+[12:25:26 INF] A próxima verificação ocorrerá em 30 minutos...
+[12:25:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:26:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:27:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:28:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:29:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:30:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:31:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:32:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:33:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:34:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:35:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:36:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:37:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:38:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:39:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:40:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:41:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:42:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:43:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:44:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:45:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:46:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:47:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:48:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:49:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:50:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:51:27 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:52:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:53:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:54:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:55:25 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 16:55:25)
+[12:55:25 INF] A próxima verificação ocorrerá em 30 minutos...
+[12:55:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:56:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:57:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:58:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[12:59:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:00:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:01:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:02:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:03:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:04:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:05:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:06:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:07:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:08:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:09:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:10:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:11:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:12:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:13:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:14:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:15:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:16:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:17:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:18:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:19:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:20:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:21:26 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:22:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:23:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:24:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:25:24 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 17:25:24)
+[13:25:24 INF] A próxima verificação ocorrerá em 30 minutos...
+[13:25:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:26:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:27:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:28:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:29:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:30:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:31:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:32:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:33:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:34:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:35:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:36:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:37:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:38:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:39:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:40:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:41:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:42:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:43:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:44:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:45:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:46:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:47:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:48:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:49:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:50:25 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:51:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:52:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:53:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:54:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:55:23 INF] Fora da janela de monitoramento. Ignorando execução. (UTC agora: 06/08/2025 17:55:23)
+[13:55:23 INF] A próxima verificação ocorrerá em 30 minutos...
+[13:55:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:56:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:57:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:58:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[13:59:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:00:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:01:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:02:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:03:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:04:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:05:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:06:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:07:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:08:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:09:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:10:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:11:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:12:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:13:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:14:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:15:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:16:24 INF] Fora da janela de monitoramento. Nenhuma live será buscada.
+[14:17:17 INF] Application is shutting down...

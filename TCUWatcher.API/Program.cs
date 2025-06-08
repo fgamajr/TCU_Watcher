@@ -3,20 +3,18 @@ using TCUWatcher.API.Authentication;
 using TCUWatcher.API.Extensions;
 using TCUWatcher.Application.SessionEvents;
 using TCUWatcher.Application.Users;
+using TCUWatcher.Application.Monitoring;
 using TCUWatcher.Domain.Repositories;
 using TCUWatcher.Domain.Services;
+using TCUWatcher.Infrastructure.BackgroundServices;
+using TCUWatcher.Infrastructure.Monitoring;
 using TCUWatcher.Infrastructure.SessionEvents;
 using TCUWatcher.Infrastructure.Storage;
 using TCUWatcher.Infrastructure.Users;
-using TCUWatcher.Infrastructure.BackgroundServices;
-using TCUWatcher.Infrastructure.Workers;
-using TCUWatcher.Infrastructure.Monitoring;
-using TCUWatcher.Application.Monitoring;
+using TCUWatcher.Infrastructure.Video;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using TCUWatcher.Infrastructure.Video;
-
 
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
@@ -48,8 +46,8 @@ try
         builder.Services.AddScoped<ISessionEventRepository, MockSessionEventRepository>();
         builder.Services.AddSingleton<IStorageService, MockStorageService>();
         builder.Services.AddScoped<IMonitoringWindowRepository, MockMonitoringWindowRepository>();
-        builder.Services.AddScoped<IVideoDiscoveryService, MockVideoDiscoveryService>(); // ✅ Adicionado
-
+        builder.Services.AddScoped<IVideoDiscoveryService, MockVideoDiscoveryService>();
+        builder.Services.AddScoped<ISessionSyncService, MockSessionSyncService>();// ✅ Adicionado mock
         builder.Services.AddScoped<IAuthenticationService, MockAuthenticationService>();
         builder.Services.AddMockAuthentication();
     }
@@ -70,15 +68,17 @@ try
             throw new NotImplementedException("IAuthenticationService de produção não implementado."));
         builder.Services.AddScoped<IVideoDiscoveryService>(sp =>
             throw new NotImplementedException("IVideoDiscoveryService de produção não implementado."));
+        builder.Services.AddScoped<ISessionSyncService>(sp =>
+            throw new NotImplementedException("ISessionSyncService de produção não implementado."));
     }
 
-    builder.Services.AddScoped<ISessionEventService, SessionEventService>();
+    // Serviços compartilhados
     builder.Services.AddScoped<IMonitoringWindowService, MonitoringWindowService>();
+    builder.Services.AddScoped<ILiveDetectionService, LiveDetectionService>();
+    builder.Services.AddScoped<ISessionEventService, SessionEventService>();
 
-    // Hosted background services
-    builder.Services.AddHostedService<LiveDetectionService>();
+    // Serviço de background (orquestrador)
     builder.Services.AddHostedService<SyncService>();
-
 
     var app = builder.Build();
 

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using TCUWatcher.Application.SessionEvents;
 using TCUWatcher.Application.SessionEvents.DTOs;
 using TCUWatcher.Domain.Services; // <--- O 'using' mais importante para este erro

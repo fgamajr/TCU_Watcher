@@ -1,27 +1,32 @@
-using TCUWatcher.Application.Monitoring;
-using TCUWatcher.Infrastructure.Monitoring;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TCUWatcher.Domain.Services;
 using TCUWatcher.Application.SessionEvents;
 using TCUWatcher.Application.SessionEvents.DTOs;
+using TCUWatcher.Domain.Services;
 
 namespace TCUWatcher.Infrastructure.BackgroundServices
 {
     public class SyncService : BackgroundService
     {
-        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<SyncService> _logger;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly TimeSpan _interval;
 
-        public SyncService(IServiceScopeFactory scopeFactory, ILogger<SyncService> logger)
+        public SyncService(
+            ILogger<SyncService> logger,
+            IServiceScopeFactory scopeFactory,
+            IConfiguration configuration)
         {
-            _scopeFactory = scopeFactory;
             _logger = logger;
+            _scopeFactory = scopeFactory;
+
+            var intervalSeconds = configuration.GetValue<int>("LiveDetection:IntervalSeconds", 1800);
+            _interval = TimeSpan.FromSeconds(intervalSeconds);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -35,64 +40,31 @@ namespace TCUWatcher.Infrastructure.BackgroundServices
                     using var scope = _scopeFactory.CreateScope();
 
                     var monitoringService = scope.ServiceProvider.GetRequiredService<IMonitoringWindowService>();
-                    var videoDiscovery = scope.ServiceProvider.GetRequiredService<IVideoDiscoveryService>();
-                    var sessionEventService = scope.ServiceProvider.GetRequiredService<ISessionEventService>();
+                    var liveDetectionService = scope.ServiceProvider.GetRequiredService<ILiveDetectionService>();
+                    var sessionSyncService = scope.ServiceProvider.GetRequiredService<ISessionSyncService>();
 
                     var dentroDaJanela = await monitoringService.IsCurrentlyInActiveWindowAsync(stoppingToken);
 
                     if (dentroDaJanela)
                     {
-                        var lives = await videoDiscovery.GetLiveEventsAsync();
-
-                        foreach (var live in lives)
-                        {
-                            _logger.LogInformation("Live detectada: {Title} ({VideoId})", live.Title, live.VideoId);
-
-                            // var createDto = new CreateSessionEventDto
-                            // {
-                            //     Title = live.Title,
-                            //     VideoId = live.VideoId,
-                            //     Url = live.Url,
-                            //     StartedAt = live.StartedAt,
-                            //     Source = Domain.Entities.EventSourceType.Live
-                            // };
-
-                            var createDto = new CreateSessionEventDto
-                            {
-                                Title = live.Title,
-                                SourceId = live.VideoId,
-                                Url = live.Url, // Remover esta linha (não existe no DTO)
-                                SourceType = "YouTube",
-                                StartedAt = live.StartedAt,
-                                IsLive = true
-                            };
-
-
-                            var result = await sessionEventService.CreateAsync(createDto);
-
-                            if (result.IsSuccess)
-                            {
-                                _logger.LogInformation("Evento de sessão criado com sucesso para a live {VideoId}", live.VideoId);
-                            }
-                            else
-                            {
-                                _logger.LogWarning("Falha ao criar evento de sessão para {VideoId}: {Error}",
-                                    live.VideoId, result.Error?.Message ?? "Erro desconhecido");
-                            }
-                        }
+                        _logger.LogInformation("Dentro da janela de monitoramento. Iniciando verificação de lives...");
+                        await liveDetectionService.DetectLiveSessionsAsync(stoppingToken);
                     }
                     else
                     {
-                        _logger.LogInformation("Fora da janela de monitoramento. Nenhuma live será buscada.");
+                        _logger.LogInformation("Fora da janela de monitoramento. Não serão buscadas lives.");
                     }
+
+                    // Sincronizar o estado do banco de dados (live ou manual upload)
+                    await sessionSyncService.SyncAsync(stoppingToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Erro durante execução do SyncService");
+                    _logger.LogError(ex, "Erro durante execução do SyncService.");
                 }
 
-                // Esperar um pouco antes da próxima execução (ex: 1 minuto)
-                await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                _logger.LogInformation("A próxima verificação ocorrerá em {Minutes} minutos...", _interval.TotalMinutes);
+                await Task.Delay(_interval, stoppingToken);
             }
 
             _logger.LogInformation("SyncService finalizado.");
