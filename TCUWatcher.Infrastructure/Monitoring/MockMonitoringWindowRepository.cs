@@ -35,4 +35,36 @@ public sealed class MockMonitoringWindowRepository : IMonitoringWindowRepository
 
         return Task.FromResult(win);
     }
+
+    public MockMonitoringWindowRepository()
+{
+    var now = DateTimeOffset.UtcNow;
+    var baseDate = now.Date; // hoje 00:00 UTC
+
+    foreach (var day in new[]
+    {
+        DayOfWeek.Monday,
+        DayOfWeek.Tuesday,
+        DayOfWeek.Wednesday,
+        DayOfWeek.Thursday,
+        DayOfWeek.Friday
+    })
+    {
+        // Calcula o próximo dia útil correspondente
+        var daysUntil = ((int)day - (int)baseDate.DayOfWeek + 7) % 7;
+        var startUtc = baseDate.AddDays(daysUntil).AddHours(8);
+        var endUtc = baseDate.AddDays(daysUntil).AddHours(21);
+
+        var window = new MonitoringWindow
+        {
+            Id = Guid.NewGuid(),
+            StartUtc = startUtc,
+            EndUtc = endUtc
+        };
+
+        _store[window.Id] = window;
+    }
+}
+
+
 }

@@ -1,11 +1,12 @@
+using System.Threading;
 using System.Threading.Tasks;
+using TCUWatcher.Domain.Monitoring;
 
-namespace TCUWatcher.Domain.Services;
-
-public interface IMonitoringWindowService
+namespace TCUWatcher.Domain.Services
 {
-    /// <summary>
-    /// Verifica se o momento atual está dentro de alguma janela de monitoramento ativa.
-    /// </summary>
-    Task<bool> IsCurrentlyInActiveWindowAsync();
+    public interface IMonitoringWindowService
+    {
+        Task<MonitoringWindow?> GetCurrentAsync(CancellationToken ct = default);
+        Task<bool> IsCurrentlyInActiveWindowAsync(CancellationToken ct = default);
+    }
 }

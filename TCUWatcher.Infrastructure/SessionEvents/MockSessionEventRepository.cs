@@ -61,5 +61,17 @@ namespace TCUWatcher.Infrastructure.SessionEvents
             _storage[sessionEvent.Id] = sessionEvent;
             return Task.CompletedTask;
         }
+
+        public Task<IEnumerable<SessionEvent>> GetSessionsInTimeRangeAsync(DateTime start, DateTime end)
+        {
+            var sessions = _storage.Values
+                .Where(s => s.StartedAt.HasValue &&
+                            s.StartedAt.Value >= start &&
+                            s.StartedAt.Value <= end)
+                .ToList();
+
+            return Task.FromResult<IEnumerable<SessionEvent>>(sessions);
+        }
+
     }
 }

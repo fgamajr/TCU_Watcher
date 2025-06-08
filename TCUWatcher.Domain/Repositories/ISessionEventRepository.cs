@@ -13,5 +13,7 @@ namespace TCUWatcher.Domain.Repositories
         Task AddAsync(SessionEvent sessionEvent);
         Task UpdateAsync(SessionEvent sessionEvent);
         Task DeleteAsync(string id);
+        Task<IEnumerable<SessionEvent>> GetSessionsInTimeRangeAsync(DateTime start, DateTime end);
+
     }
 }

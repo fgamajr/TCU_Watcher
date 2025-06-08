@@ -8,13 +8,20 @@ using TCUWatcher.Domain.Services;
 using TCUWatcher.Infrastructure.SessionEvents;
 using TCUWatcher.Infrastructure.Storage;
 using TCUWatcher.Infrastructure.Users;
+using TCUWatcher.Infrastructure.Workers;
+using TCUWatcher.Infrastructure.Monitoring;
+using TCUWatcher.Application.Monitoring;
 
-// A configuração do Serilog continua a mesma, fora de qualquer ambiente.
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("logs/tcuwatcher-.log", rollingInterval: RollingInterval.Day,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.Console(
+    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+    theme: Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code)
+
+    .WriteTo.File(new Serilog.Formatting.Json.JsonFormatter(),
+                "logs/tcuwatcher-structured.json",
+                rollingInterval: RollingInterval.Day)
+
     .CreateLogger();
 
 try
@@ -24,63 +31,42 @@ try
     var builder = WebApplication.CreateBuilder(args);
     builder.Host.UseSerilog();
     builder.Services.AddControllers();
-    builder.Services.AddSwaggerWithBearer(); // Swagger é útil em ambos os ambientes.
+    builder.Services.AddSwaggerWithBearer();
     builder.Services.AddAutoMapper(typeof(ISessionEventService).Assembly);
 
-    // ============================================================================
-    // AQUI COMEÇA A MÁGICA DA SEPARAÇÃO DE AMBIENTES
-    // ============================================================================
     if (builder.Environment.IsDevelopment())
     {
         Log.Information("Ambiente de Desenvolvimento detectado. Usando serviços MOCK.");
 
-        // --- SERVIÇOS DE DESENVOLVIMENTO (MOCKS) ---
         builder.Services.AddSingleton<ICurrentUserProvider, MockUserProvider>();
         builder.Services.AddScoped<IUserService, MockUserService>();
         builder.Services.AddScoped<ISessionEventRepository, MockSessionEventRepository>();
         builder.Services.AddSingleton<IStorageService, MockStorageService>();
-        
-        // --- AUTENTICAÇÃO MOCK ---
+        builder.Services.AddScoped<IMonitoringWindowRepository, MockMonitoringWindowRepository>();
+
         builder.Services.AddScoped<IAuthenticationService, MockAuthenticationService>();
-        builder.Services.AddMockAuthentication(); // Extensão que configura o handler mock.
+        builder.Services.AddMockAuthentication();
     }
     else
     {
-        // --- AMBIENTE DE PRODUÇÃO (OU QUALQUER OUTRO QUE NÃO SEJA DEV) ---
         Log.Warning("Ambiente de Produção ou Staging detectado. Configurando para serviços reais.");
         Log.Warning("ATENÇÃO: Implementações de produção ainda são necessárias.");
 
-        // Deixamos os "slots" prontos, mas lançamos um erro se forem usados.
-        // Isso evita que a aplicação rode em produção sem estar completa.
-        builder.Services.AddSingleton<ICurrentUserProvider>(sp => 
+        builder.Services.AddSingleton<ICurrentUserProvider>(sp =>
             throw new NotImplementedException("ICurrentUserProvider de produção não implementado."));
-            
-        builder.Services.AddScoped<IUserService>(sp => 
+        builder.Services.AddScoped<IUserService>(sp =>
             throw new NotImplementedException("IUserService de produção não implementado."));
-
-        builder.Services.AddScoped<ISessionEventRepository>(sp => 
+        builder.Services.AddScoped<ISessionEventRepository>(sp =>
             throw new NotImplementedException("ISessionEventRepository de produção não implementado."));
-
-        builder.Services.AddSingleton<IStorageService>(sp => 
+        builder.Services.AddSingleton<IStorageService>(sp =>
             throw new NotImplementedException("IStorageService de produção não implementado."));
-
-        // --- AUTENTICAÇÃO REAL (JWT) ---
-        builder.Services.AddScoped<IAuthenticationService>(sp => 
+        builder.Services.AddScoped<IAuthenticationService>(sp =>
             throw new NotImplementedException("IAuthenticationService de produção não implementado."));
-        
-        // Aqui entraria a configuração de autenticação JWT real.
-        // Ex: builder.Services.AddJwtBearerAuthentication(options => { ... });
-        // Por enquanto, se rodar em produção, qualquer endpoint protegido dará erro 500,
-        // pois a autenticação não estará configurada.
     }
 
-    // A lógica de negócio principal é registrada da mesma forma para ambos os ambientes,
-    // pois ela depende das abstrações (interfaces), não das implementações.
     builder.Services.AddScoped<ISessionEventService, SessionEventService>();
-    
-    // ============================================================================
-    // FIM DA SEPARAÇÃO DE AMBIENTES
-    // ============================================================================
+    builder.Services.AddScoped<IMonitoringWindowService, MonitoringWindowService>();
+    builder.Services.AddHostedService<LiveDetectionService>();
 
     var app = builder.Build();
 
@@ -90,13 +76,9 @@ try
         app.UseSwaggerUI();
     }
 
-    // app.UseHttpsRedirection();
-    
-    // O middleware de autenticação e autorização é adicionado para ambos os ambientes.
-    // O comportamento dele vai depender de como os serviços foram registrados acima.
     app.UseAuthentication();
     app.UseAuthorization();
-    
+
     app.MapControllers();
     app.Run();
 }
