@@ -11,7 +11,9 @@ using TCUWatcher.Domain.Services;
 
 
 
-namespace TCUWatcher.Infrastructure.Workers
+
+
+namespace TCUWatcher.Infrastructure.BackgroundServices
 {
     public class LiveDetectionService : BackgroundService
     {

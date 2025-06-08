@@ -8,5 +8,7 @@ namespace TCUWatcher.Domain.Services
     {
         Task<MonitoringWindow?> GetCurrentAsync(CancellationToken ct = default);
         Task<bool> IsCurrentlyInActiveWindowAsync(CancellationToken ct = default);
+        
+
     }
 }

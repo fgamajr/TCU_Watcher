@@ -8,20 +8,24 @@ using TCUWatcher.Domain.Services;
 using TCUWatcher.Infrastructure.SessionEvents;
 using TCUWatcher.Infrastructure.Storage;
 using TCUWatcher.Infrastructure.Users;
+using TCUWatcher.Infrastructure.BackgroundServices;
 using TCUWatcher.Infrastructure.Workers;
 using TCUWatcher.Infrastructure.Monitoring;
 using TCUWatcher.Application.Monitoring;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using TCUWatcher.Infrastructure.Video;
+
 
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console(
-    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
-    theme: Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code)
-
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+        theme: Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code)
     .WriteTo.File(new Serilog.Formatting.Json.JsonFormatter(),
-                "logs/tcuwatcher-structured.json",
-                rollingInterval: RollingInterval.Day)
-
+        "logs/tcuwatcher-structured.json",
+        rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
 try
@@ -30,6 +34,7 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
     builder.Host.UseSerilog();
+
     builder.Services.AddControllers();
     builder.Services.AddSwaggerWithBearer();
     builder.Services.AddAutoMapper(typeof(ISessionEventService).Assembly);
@@ -43,6 +48,7 @@ try
         builder.Services.AddScoped<ISessionEventRepository, MockSessionEventRepository>();
         builder.Services.AddSingleton<IStorageService, MockStorageService>();
         builder.Services.AddScoped<IMonitoringWindowRepository, MockMonitoringWindowRepository>();
+        builder.Services.AddScoped<IVideoDiscoveryService, MockVideoDiscoveryService>(); // ✅ Adicionado
 
         builder.Services.AddScoped<IAuthenticationService, MockAuthenticationService>();
         builder.Services.AddMockAuthentication();
@@ -62,11 +68,17 @@ try
             throw new NotImplementedException("IStorageService de produção não implementado."));
         builder.Services.AddScoped<IAuthenticationService>(sp =>
             throw new NotImplementedException("IAuthenticationService de produção não implementado."));
+        builder.Services.AddScoped<IVideoDiscoveryService>(sp =>
+            throw new NotImplementedException("IVideoDiscoveryService de produção não implementado."));
     }
 
     builder.Services.AddScoped<ISessionEventService, SessionEventService>();
     builder.Services.AddScoped<IMonitoringWindowService, MonitoringWindowService>();
+
+    // Hosted background services
     builder.Services.AddHostedService<LiveDetectionService>();
+    builder.Services.AddHostedService<SyncService>();
+
 
     var app = builder.Build();
 

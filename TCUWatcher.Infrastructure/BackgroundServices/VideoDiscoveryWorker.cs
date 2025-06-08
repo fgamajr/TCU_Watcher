@@ -9,7 +9,9 @@ using TCUWatcher.Application.SessionEvents;
 using TCUWatcher.Application.SessionEvents.DTOs;
 using TCUWatcher.Domain.Services; // <--- O 'using' mais importante para este erro
 
-namespace TCUWatcher.Infrastructure.Workers;
+
+
+namespace TCUWatcher.Infrastructure.BackgroundServices;
 
 public class VideoDiscoveryWorker : BackgroundService
 {
