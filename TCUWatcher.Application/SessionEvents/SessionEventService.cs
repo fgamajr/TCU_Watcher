@@ -19,13 +19,17 @@ namespace TCUWatcher.Application.SessionEvents
         private readonly IStorageService _storageService;
         private readonly ILogger<SessionEventService> _logger;
         private readonly IMapper _mapper;
+        private readonly ISessionSyncService _sessionSyncService;
 
-        public SessionEventService(ISessionEventRepository repo, IStorageService storageService, ILogger<SessionEventService> logger, IMapper mapper)
+        
+        public SessionEventService(ISessionEventRepository repo, IStorageService storageService, ILogger<SessionEventService> logger, IMapper mapper, ISessionSyncService sessionSyncService)
+
         {
             _repo = repo;
             _storageService = storageService;
             _logger = logger;
             _mapper = mapper;
+        _sessionSyncService = sessionSyncService;
         }
 
         public async Task<Result<SessionEventDto, DomainError>> CreateAsync(CreateSessionEventDto input)
@@ -90,8 +94,11 @@ namespace TCUWatcher.Application.SessionEvents
             };
             await _repo.AddAsync(sessionEvent);
             _logger.LogInformation("Sessão de Upload Manual criada com ID: {SessionId}. Iniciando processamento em background.", sessionEvent.Id);
-            // ... (lógica do Task.Run) ...
+
+            await _sessionSyncService.SyncAsync(); // <- adicione isto aqui ✅
+
             return Result<SessionEventDto, DomainError>.Success(_mapper.Map<SessionEventDto>(sessionEvent));
         }
+
     }
 }

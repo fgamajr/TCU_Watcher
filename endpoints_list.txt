@@ -1,8 +1,0 @@
-POST /api/Auth/login
-GET /api/SessionEvents
-POST /api/SessionEvents
-DELETE /api/SessionEvents/{id}
-GET /api/SessionEvents/{id}
-PUT /api/SessionEvents/{id}
-POST /api/SessionEvents/upload
-GET /api/Test/me

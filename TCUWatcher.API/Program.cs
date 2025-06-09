@@ -15,6 +15,9 @@ using TCUWatcher.Infrastructure.Video;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TCUWatcher.Infrastructure.Helpers;
+using TCUWatcher.Infrastructure.Services;
+
 
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
@@ -76,6 +79,11 @@ try
     builder.Services.AddScoped<IMonitoringWindowService, MonitoringWindowService>();
     builder.Services.AddScoped<ILiveDetectionService, LiveDetectionService>();
     builder.Services.AddScoped<ISessionEventService, SessionEventService>();
+
+    // Serviço de validação de título
+    builder.Services.AddScoped<FuzzyMatcherService>();
+    builder.Services.AddScoped<ITitleValidationService, TitleValidationService>();
+
 
     // Serviço de background (orquestrador)
     builder.Services.AddHostedService<SyncService>();

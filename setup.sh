@@ -1,36 +1,123 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-# ========= 1. BUILD =========
-echo "🔨  Building solution…"
-dotnet build -c Debug
+echo "🔧 Atualizando StringNormalizer.cs..."
+cat > TCUWatcher.Infrastructure/Helpers/StringNormalizer.cs <<EOF
+using System.Globalization;
+using System.Linq;
+using System.Text;
 
-# ========= 2. SEED / UPDATE WINDOW =========
-echo "🌱  Seeding dev MonitoringWindow covering NOW…"
-dotnet run --project tools/SeedMonitoringWindow.csproj
+namespace TCUWatcher.Infrastructure.Helpers;
 
-# ========= 3. START API (background) =========
-echo "🚀  Starting API with SimTimeProvider…"
-DOTNET_ENVIRONMENT=Development \
-dotnet run --project TCUWatcher.API \
-  --urls "http://localhost:5092" >/dev/null 2>&1 &
-API_PID=$!
-trap "kill $API_PID" EXIT
+public static class StringNormalizer
+{
+    public static string Normalize(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return "";
 
-# Aguarda ficar de pé
-until curl -s http://localhost:5092/healthz >/dev/null; do sleep 1; done
-echo "✅  API is up (PID=$API_PID)."
+        string normalized = input.Normalize(NormalizationForm.FormD);
+        var chars = normalized
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .ToArray();
 
-# ========= 4. TIME-LAPSE SIMULATION =========
-echo "⏩  Simulating 24 h in fast-forward…"
-START=$(date -u -d "-12 hours" '+%Y-%m-%dT%H:%M:%SZ')
+        return new string(chars).ToLowerInvariant();
+    }
+}
+EOF
 
-for h in $(seq 0 24); do
-  SIM=$(date -u -d "$START +$h hours" '+%Y-%m-%dT%H:%M:%SZ')
-  RESP=$(curl -s -H "X-Simulated-Time: $SIM" \
-               http://localhost:5092/monitoring-window/current)
-  echo -e "🕒 $SIM  ➜  $RESP"
-  sleep 0.05
-done
+echo "🔧 Atualizando TitleValidationService.cs..."
+cat > TCUWatcher.Infrastructure/Services/TitleValidationService.cs <<EOF
+using FuzzySharp;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using TCUWatcher.Infrastructure.Helpers;
 
-echo "🏁  Simulation finished."
+namespace TCUWatcher.Infrastructure.Services;
+
+public class TitleValidationService : ITitleValidationService
+{
+    private readonly List<string> _keywords;
+    private readonly ILogger<TitleValidationService> _logger;
+
+    public TitleValidationService(IConfiguration config, ILogger<TitleValidationService> logger)
+    {
+        _logger = logger;
+        _keywords = config.GetSection("YouTube:TitleKeywords").Get<List<string>>() ?? new();
+    }
+
+    public bool IsRelevant(string title)
+    {
+        var normalizedTitle = StringNormalizer.Normalize(title);
+
+        foreach (var keyword in _keywords)
+        {
+            var normalizedKeyword = StringNormalizer.Normalize(keyword);
+            var score = Fuzz.Ratio(normalizedTitle, normalizedKeyword);
+
+            if (score >= 75)
+            {
+                _logger.LogInformation($"Título '{title}' aceito (score {score} com keyword '{keyword}')");
+                return true;
+            }
+        }
+
+        _logger.LogInformation($"Título '{title}' rejeitado");
+        return false;
+    }
+}
+EOF
+
+echo "🔧 Atualizando TitleValidationServiceTests.cs..."
+cat > TCUWatcher.Tests/Infraestructure/TitleValidationServiceTests.cs <<EOF
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
+using TCUWatcher.Infrastructure.Services;
+using Xunit;
+
+namespace TCUWatcher.Tests.Infrastructure;
+
+public class TitleValidationServiceTests
+{
+    private readonly TitleValidationService _service;
+
+    public TitleValidationServiceTests()
+    {
+        var inMemorySettings = new Dictionary<string, string>
+        {
+            {"YouTube:TitleKeywords:0", "câmara"},
+            {"YouTube:TitleKeywords:1", "camara"},
+            {"YouTube:TitleKeywords:2", "plenário"},
+            {"YouTube:TitleKeywords:3", "plenario"},
+            {"YouTube:TitleKeywords:4", "tcu"},
+            {"YouTube:TitleKeywords:5", "sessão"},
+            {"YouTube:TitleKeywords:6", "sessao"},
+            {"YouTube:TitleKeywords:7", "tribunal de contas"}
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+
+        var logger = Mock.Of<ILogger<TitleValidationService>>();
+        _service = new TitleValidationService(configuration, logger);
+    }
+
+    [Theory]
+    [InlineData("Plenário do Tribunal", true)]
+    [InlineData("Plenario de julgamentos", true)]
+    [InlineData("1a Camara de julgamento", true)]
+    [InlineData("Sessão do TCU ao vivo", true)]
+    [InlineData("Live aleatória qualquer", false)]
+    [InlineData("Show de Rock em Brasília", false)]
+    public void IsRelevant_ShouldValidateVariousTitles(string title, bool expected)
+    {
+        var result = _service.IsRelevant(title);
+        Assert.Equal(expected, result);
+    }
+}
+EOF
+
+echo "🚀 Rodando testes..."
+dotnet build && dotnet test
